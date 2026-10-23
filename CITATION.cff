@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: Gatewright
+abstract: "Gatewright is an open-source PMO harness for programmes that run on gates - capital projects, integrations, transformations, product programmes. It connects your schedule tool, planner, mailbox and document store, scores each gate against a configurable gate model, runs chasers and forecasts, and exposes everything as MCP tools."
+type: software
+authors:
+  - family-names: Sidorecs
+    given-names: Aleks
+repository-code: "https://github.com/automatiqa-lab/gatewright"
+url: "https://www.automatiqa.io/gatewright/"
+license: MIT
+keywords:
+  - project-controls
+  - capital-projects
+  - stage-gate
+  - pmo
+  - construction
+  - mcp-server
+  - agentic-ai
+  - primavera-p6
+  - microsoft-planner
+  - fel
+date-released: 2026-10-23

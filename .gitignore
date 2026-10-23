@@ -1,0 +1,15 @@
+# Working files that are not part of the project
+*.pptx
+~$*
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
+
+# Local data and handover bundles
+*.duckdb
+*.zip

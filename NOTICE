@@ -1,0 +1,20 @@
+Gatewright - AI PMO harness for capital project delivery
+Copyright 2026 Automatiqa Lab by Aleks Sidorecs <aleks@automatiqa.io>
+
+This product includes software developed as part of the Automatiqa Lab
+(https://www.automatiqa.io/gatewright/).
+
+## Upstream models
+
+Gatewright's planned agents send prompts to a language model chosen by whoever runs it - a hosted
+model under its provider's terms, or a locally run open-weight model (for example through Ollama)
+under its own model licence - always through the redactor. The forecast engine runs a tabular model
+behind an adapter; its weights are pinned only after licence verification. The lab does not train,
+fine-tune or distribute models, and is not a provider of a general-purpose AI model under the EU AI
+Act. Obligations for the models themselves sit with their providers.
+
+Output produced with these models is marked per EU AI Act Article 50. See COMPLIANCE.md.
+
+## Bundled third-party material
+
+None.
