@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block topright %}<span class="tag {{ 'green' if login_mode else 'amber' }}">{{ "Login mode" if login_mode else "Trust mode | localhost only" }}</span>{% endblock %}
+{% block body %}
+{% if new_token %}
+<div class="card"><h4>New API token <span class="tag amber">shown once</span></h4>
+  <p class="small">Copy it now. Only its hash is stored; it cannot be shown again.</p>
+  <pre class="mono" style="white-space:pre-wrap">{{ new_token }}</pre>
+</div>
+{% endif %}
+<div class="row">
+  <div class="col">
+    <div class="card"><h4>Users and roles | {{ users_rows|length }}</h4>
+    <div class="tbl-wrap"><table>
+      <tr><th>Name</th><th>Email</th><th>Sign-in</th><th>Roles</th><th>API tokens</th></tr>
+      {% for r in users_rows %}
+      <tr>
+        <td><b>{{ r.u.name }}</b> <span class="m small">{{ r.u.short }}</span></td>
+        <td class="m small">{{ r.u.email }}</td>
+        <td class="small">{{ "password" if r.password else ("SSO" if idps else "—") }}</td>
+        <td>
+          <form method="post" action="/settings/users/{{ r.u.id }}/roles" class="inline">
+            <select class="inp" name="roles" multiple size="3" style="min-width:200px">
+              {% for role in known_roles %}<option value="{{ role }}"{% if role in r.u.roles %} selected{% endif %}>{{ role }}</option>{% endfor %}
+            </select>
+            <button class="btn small sec" type="submit">Save</button>
+          </form>
+        </td>
+        <td class="m">{{ r.tokens }}
+          <form method="post" action="/settings/users/{{ r.u.id }}/token" class="inline"><button class="btn small sec" type="submit">New</button></form>
+          {% if r.tokens %}<form method="post" action="/settings/users/{{ r.u.id }}/tokens/revoke" class="inline"><button class="btn small sec" type="submit">Revoke all</button></form>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table></div>
+    <p class="small">Admin is not a wildcard: each action names the roles it needs. The last portfolio lead cannot lose the role.</p>
+    </div>
+    {% if export %}
+    <div class="card"><h4>Privacy export | {{ export["email"] }}</h4>
+      <p class="small">{{ export["users"]|length }} users, {{ export["contacts"]|length }} contacts, {{ export["inbound_items"]|length }} inbound items.</p>
+      <pre style="white-space:pre-wrap;max-height:360px;overflow:auto">{{ export|tojson(indent=2) }}</pre>
+    </div>
+    {% endif %}
+  </div>
+  <div class="rail" style="flex-basis:380px">
+    <div class="card"><h4>Add a user</h4>
+      <form method="post" action="/settings/users" class="form">
+        <div class="field"><label for="name">Name</label><div class="ctl"><input class="inp" id="name" name="name" required></div></div>
+        <div class="field"><label for="short">Initials</label><div class="ctl"><input class="inp" id="short" name="short" required maxlength="4"></div></div>
+        <div class="field"><label for="email">Email</label><div class="ctl"><input class="inp" id="email" name="email" type="email" required></div></div>
+        <div class="field"><label for="roles">Roles</label><div class="ctl"><select class="inp" id="roles" name="roles" multiple size="5">{% for role in known_roles %}<option value="{{ role }}">{{ role }}</option>{% endfor %}</select></div></div>
+        <div class="field"><label></label><div class="ctl"><button class="btn" type="submit">Add user</button></div></div>
+      </form>
+      <p class="small">Passwords are set from the CLI; SSO users are provisioned at first sign-in.</p>
+    </div>
+    <div class="card"><h4>Sign-in</h4>
+      <div class="list">
+        <div class="item"><div class="stripe {{ 'ok' if login_mode else 'warn' }}"></div><div><div class="t">{{ "Login required" if login_mode else "Trust mode" }}</div><div class="who">{{ "password or SSO, HMAC session cookie, CSRF on every form" if login_mode else "no sign-in; the server refuses to bind beyond localhost" }}</div></div></div>
+        {% for c in idps %}<div class="item"><div class="stripe ok"></div><div><div class="t">SSO | {{ c.name }}</div><div class="who">{{ c.id }} | {{ c.adapter }}</div></div></div>{% endfor %}
+      </div>
+    </div>
+    <div class="card"><h4>Retention <span class="tag">policy rev {{ policy_rev }}</span></h4>
+      <div class="list">
+        {% for k, v in retention.items() %}<div class="item"><div class="stripe"></div><div><div class="t">{{ k|replace("_", " ") }}</div><div class="who">{{ v }}</div></div></div>
+        {% else %}<div class="item"><div><div class="t">Defaults: inbound payloads kept 90 days</div></div></div>{% endfor %}
+      </div>
+      <form method="post" action="/settings/retention/purge" class="inline" style="margin-top:6px"><button class="btn small" type="submit">Purge {{ purgeable }} expired payloads</button></form>
+      <p class="small">Purging blanks message bodies past the window; derived facts and the event log stay. Change the window on <a href="/policies">Policies</a>.</p>
+    </div>
+    <div class="card"><h4>Privacy</h4>
+      <form method="post" action="/settings/privacy" class="form">
+        <div class="field"><label for="pemail">Email</label><div class="ctl"><input class="inp" id="pemail" name="email" type="email" required></div></div>
+        <div class="field"><label></label><div class="ctl">
+          <button class="btn small sec" name="action" value="export" type="submit">Export</button>
+          <button class="btn small confirm-btn" name="action" value="erase" type="submit" data-tip="Erases every payload and contact for this address; event shells stay.">Erase</button>
+        </div></div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="tbl-wrap"><table>
+  <tr><th>ID</th><th>Project</th><th>Zone</th><th>Archetype</th><th>Gate model</th><th>Current gate</th><th>Readiness</th><th>Recommendation</th><th>Review</th></tr>
+  {% for r in rows %}
+  <tr{% if r.at_risk %} class="hatch amber"{% endif %}>
+    <td class="m"><a href="/projects/{{ r.code }}">{{ r.code }}</a></td><td>{{ r.name }}</td><td class="m">{{ r.zone }}</td>
+    <td class="m">{{ r.archetype|replace("_", " ") }}</td><td class="m">{{ r.gate_model }}</td>
+    <td><a href="/projects/{{ r.code }}/gates/{{ r.gate }}">{{ r.gate_name or "—" }}</a></td>
+    <td class="m">{{ r.readiness|pct }} of {{ r.threshold|pct }}</td>
+    <td>{% if r.recommendation == "hold" %}<span class="stamp red flat">Hold</span>{% elif r.recommendation %}<span class="stamp green flat">{{ r.recommendation|replace("_", " ") }}</span>{% endif %}</td>
+    <td class="m">{{ r.review_at|ddmmm }} | {{ r.days_to_review }} d</td>
+  </tr>
+  {% else %}<tr><td colspan="9" class="empty">No projects.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

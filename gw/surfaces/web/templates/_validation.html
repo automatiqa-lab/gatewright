@@ -1,0 +1,2 @@
+{% if rep.ok %}<div class="ok-note">Valid.{% for w in rep.warnings %} Warning: {{ w }}.{% endfor %}</div>
+{% else %}<div class="err"><b>Invalid</b>{% for e in rep.errors %}<br><span class="mono">{{ e.pointer or "/" }}</span> {{ e.message }}{% endfor %}{% for w in rep.warnings %}<br>warning: {{ w }}{% endfor %}</div>{% endif %}

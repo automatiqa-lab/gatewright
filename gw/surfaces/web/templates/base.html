@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>{{ sheet }} {{ title }} | Gatewright</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/static/gw.css">
+<meta name="csrf-token" content="{{ csrf }}">
+<script src="/static/gw-theme.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/htmx/1.9.12/htmx.min.js" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+</head>
+<body>
+<div class="app">
+<div class="zsheet">
+<div aria-hidden="true"><span class="zn t" style="left:8.333%">1</span><span class="zn t" style="left:25.000%">2</span><span class="zn t" style="left:41.667%">3</span><span class="zn t" style="left:58.333%">4</span><span class="zn t" style="left:75.000%">5</span><span class="zn t" style="left:91.667%">6</span><span class="tk t" style="left:16.667%"></span><span class="tk t" style="left:33.333%"></span><span class="tk t" style="left:50.000%"></span><span class="tk t" style="left:66.667%"></span><span class="tk t" style="left:83.333%"></span><span class="zn l" style="top:12.500%">A</span><span class="zn l" style="top:37.500%">B</span><span class="zn l" style="top:62.500%">C</span><span class="zn l" style="top:87.500%">D</span><span class="tk l" style="top:25.000%"></span><span class="tk l" style="top:50.000%"></span><span class="tk l" style="top:75.000%"></span></div>
+<div class="sheet">
+  <aside class="side" aria-label="Sheet index">
+    <div class="logo">Gatewright<a href="https://www.automatiqa.io/gatewright/" rel="noopener">Automatiqa Lab &#8599;</a></div>
+    {% for n, label, href, key in nav %}<a href="{{ href }}"{% if cur == key %} class="cur" aria-current="page"{% endif %}><span class="n">{{ n }}</span>{{ label }}</a>{% endfor %}
+    <div class="grp">System</div>
+    {% for n, label, href, key in nav_system %}<a href="{{ href }}"{% if cur == key %} class="cur" aria-current="page"{% endif %}><span class="n">{{ n }}</span>{{ label }}</a>{% endfor %}
+    <div class="who">
+      {% if login_mode %}
+      <form method="post" action="/logout" class="inline">
+        <span class="small">{{ user.name }} | {{ user.roles[0] }}</span>
+        <button class="btn small sec" type="submit">Sign out</button>
+      </form>
+      {% else %}
+      <form method="post" action="/as" class="inline">
+        <label for="as-user">acting as</label>
+        <select id="as-user" name="user" data-autosubmit>
+          {% for u in users %}<option value="{{ u.short }}"{% if u.id == user.id %} selected{% endif %}>{{ u.name }} | {{ u.roles[0] }}</option>{% endfor %}
+        </select>
+        <noscript><button class="btn small sec" type="submit">Switch</button></noscript>
+      </form>
+      {% endif %}
+      <button type="button" class="theme-toggle" data-theme-toggle>paper / blueprint</button>
+    </div>
+  </aside>
+  <div class="pane">
+    <div class="topbar">
+      <span class="right">
+        {% block topright %}{% endblock %}
+        <span id="live" hx-get="/live?since={{ seq }}" hx-trigger="every 20s" hx-swap="outerHTML"></span>
+        <span class="tag blue">automation readiness {{ "%.2f"|format(readiness) if readiness is not none else "—" }}</span>
+        <span class="tag{% if unhealthy %} amber{% endif %}">last sync {{ last_sync|hhmm }} | {{ n_conns }} connections{% if unhealthy %} | {{ unhealthy }} not ok{% endif %}</span>
+        <span class="tag">{{ user.name }} | {{ user.roles[0]|replace("_", " ") }}</span>
+      </span>
+    </div>
+    <div class="body">
+      {% set sn = sheet.split("-") %}
+      <div class="vt"><div class="bub" aria-hidden="true"><span>{{ sn[-1] }}</span><span>{{ sn[0] if sn|length > 1 else "GW" }}</span></div>
+        <div><h1>{{ title }}</h1><div class="vt-meta"><span class="crumb">{{ crumb }}</span><span>sheet {{ sheet }}</span></div></div></div>
+      {% if err %}<div class="err" role="alert"><b>Refused</b> | {{ err }}</div>{% endif %}
+      {% if msg %}<div class="ok-note" role="status">{{ msg }}</div>{% endif %}
+      {% block body %}{% endblock %}
+    </div>
+    <div class="titleblock">
+      <div><span>Sheet</span><b>{{ sheet }}</b></div>
+      <div><span>Title</span><b>{{ title }}</b></div>
+      <div><span>Rev | issue</span><b>B | {{ issue.strftime("%d %b %H:%M") }}</b></div>
+      <div><span>Drawn</span><b>{{ drawn }}</b></div>
+      <div><span>Checked</span><b>{{ checked }}</b></div>
+      <div><span>Status</span><b><span class="stamp {{ status_colour }}" style="font-size:11px">{{ status_word }}</span></b></div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+<div class="tip" id="tip" role="tooltip"></div>
+<script src="/static/gw.js" defer></script>
+</body>
+</html>

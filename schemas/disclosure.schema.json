@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automatiqa.io/ns/disclosure/1/metadata.schema.json",
+  "title": "Automatiqa disclosure envelope",
+  "description": "Machine-readable marking of AI-generated content, per EU AI Act Art. 50(2). The same five facts are expressed in whatever each output format allows: a JSON field, an HTML meta tag, YAML front matter, a PDF info dictionary and XMP packet, PPTX core properties, or a PNG text chunk.",
+  "type": "object",
+  "required": ["value", "scope", "schema"],
+  "additionalProperties": false,
+  "properties": {
+    "value": {
+      "type": "boolean",
+      "description": "True when any model-generated content is present. Emit the envelope only when true - absence of the envelope means no AI-generated content, which must stay a truthful statement."
+    },
+    "scope": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" },
+      "description": "Which parts the model wrote, in the product's own vocabulary. Examples: [\"summary\"], [\"article_summaries\", \"executive_summary\"], [\"canvas_items\"]. Never the whole document when only parts are generated."
+    },
+    "schema": {
+      "type": "string",
+      "const": "automatiqa-disclosure/1",
+      "description": "Version of this convention. Consumers key idempotency off this field, so marking twice is a no-op."
+    },
+    "system": {
+      "type": "string",
+      "description": "The product that produced the output, e.g. \"procezio\" or \"ops-risk-monitor\"."
+    },
+    "review_state": {
+      "enum": ["accepted", "unreviewed", "mixed", "none"],
+      "description": "Whether a human accepted the generated content before it left the system. \"none\" where the product has no review step."
+    },
+    "items_drafted": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of model-written items, where the product has a countable unit."
+    },
+    "items_total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total items, so a reader can weigh how much of the artefact is generated."
+    },
+    "model": {
+      "type": "string",
+      "description": "Optional and off by default. Art. 50 never requires naming the model. Set it only where the operator chose the model themselves and provenance aids incident investigation; never where the endpoint is the end user's own, since printing it leaks their local setup."
+    },
+    "ts": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the output was produced, RFC 3339."
+    }
+  }
+}

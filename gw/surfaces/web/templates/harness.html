@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block topright %}
+<form method="post" action="/harness/test-all" class="inline"><button class="btn sec" type="submit">Test all</button></form>
+<form method="post" action="/harness/all/sync" class="inline"><button class="btn" type="submit">Sync all</button></form>
+{% endblock %}
+{% block body %}
+<div class="tbl-wrap"><table>
+  <tr><th>Contract</th><th>Connection</th><th>Transport</th><th>Scope</th><th>Health</th><th>Last sync</th><th>Owner</th><th></th></tr>
+  {% for c in conns %}
+  <tr{% if c.health != "ok" %} class="hatch amber"{% endif %}>
+    <td class="m">{{ c.contract }}</td><td>{{ c.name }}<div class="num">{{ c.id }}</div></td>
+    <td class="m">{{ c.adapter }}</td><td class="m">{{ c.scopes|join(" | ")|replace("_", " ") }}</td>
+    <td><span class="tag {{ 'green' if c.health == 'ok' else ('amber' if c.health == 'degraded' else 'red') }}">{{ c.health }}</span>{% if c.last_error %}<div class="small">{{ c.last_error[:80] }}</div>{% endif %}</td>
+    <td class="m">{{ c.last_sync_at|hhmm }}</td><td class="m">{{ c.owner }}</td>
+    <td><div class="inline">
+      <form method="post" action="/harness/{{ c.id }}/test" class="inline"><button class="btn small sec" type="submit">Test</button></form>
+      {% if c.contract in ("ScheduleSource", "PlanSource", "DocumentSource", "MessageChannel", "CostSource") %}<form method="post" action="/harness/{{ c.id }}/sync" class="inline"><button class="btn small sec" type="submit">Sync</button></form>{% endif %}
+      {% if c.config.get("auth") == "device_code" %}<button class="btn small" hx-post="/harness/{{ c.id }}/login" hx-target="#login-{{ c.id }}" hx-swap="innerHTML">Sign in</button>{% endif %}
+    </div>{% if c.config.get("auth") == "device_code" %}<div id="login-{{ c.id }}"></div>{% endif %}</td>
+  </tr>
+  {% else %}<tr><td colspan="8" class="empty">No connections. Add them below or with <span class="mono">gw harness add connections.yaml</span>.</td></tr>{% endfor %}
+</table></div>
+<div class="card"><h4>Add a live Microsoft 365 connection <span class="tag">delegated | device code | no secret</span></h4>
+  <form method="post" action="/harness/add-live" class="form">
+    <div class="field"><label for="kind">Kind</label><div class="ctl"><select class="inp" id="kind" name="kind">
+      <option value="mail">Mailbox (MessageChannel)</option><option value="docs">OneDrive folder (DocumentSource)</option></select></div></div>
+    <div class="field"><label for="conn_id">Connection id</label><div class="ctl"><input class="inp" id="conn_id" name="conn_id" value="mail-live" required pattern="[a-z0-9][a-z0-9-]{1,30}"></div></div>
+    <div class="field"><label for="tenant">Directory (tenant) id</label><div class="ctl"><input class="inp" id="tenant" name="tenant" required autocomplete="off"></div></div>
+    <div class="field"><label for="client_id">Application (client) id</label><div class="ctl"><input class="inp" id="client_id" name="client_id" required autocomplete="off"></div></div>
+    <div class="field"><label for="mailbox">Mailbox (mail only)</label><div class="ctl"><input class="inp" id="mailbox" name="mailbox" autocomplete="off"></div></div>
+    <div class="field"><label for="root_path">OneDrive folder (docs only)</label><div class="ctl"><input class="inp" id="root_path" name="root_path" value="Gatewright demo"></div></div>
+    <div class="field"><label></label><div class="ctl"><button class="btn" type="submit">Add connection</button></div></div>
+  </form>
+  <p class="small muted">Only identifiers are stored, in the local database, which is never committed or exported; the public export refuses any file that contains them. There is no secret: after adding, press Sign in and log in as the masked demo account. The token is cached encrypted for your Windows user, outside the repository. Scopes are read plus <span class="mono">seed_demo</span>; the demo never sends to a real party.</p>
+</div>
+<div class="two">
+  <div class="card"><h4>Contract | ScheduleSource</h4>
+<pre>list_projects()            -> [project]
+get_activities(project)    -> [activity, dates, float, preds]
+get_milestones(project)    -> [milestone]
+get_baseline(project)      -> baseline
+dcma14(project)            -> passed / 14
+health()                   -> ok | degraded | down
+set_activity_dates(...)    -> Forbidden, always
+                              (hard limit, not a scope)
+
+PlanSource  (task lists, no logic)
+list_plans()               -> [plan]
+get_tasks(plan)            -> [task, bucket, owner,
+                               due, done, checklist]
+subscribe(plan)            -> change feed | polling
+add_comment(task, text)    -> ok   # scope comment</pre>
+    <p class="small muted">A ScheduleSource carries logic and float and feeds the schedule signals; a PlanSource task list maps tasks to commitments and never produces a float signal. Degraded after one failed sync, down after three. Gatewright stores links, hashes and derived facts, never document bodies.</p>
+  </div>
+  <div class="card"><h4>Gatewright as an MCP server <span class="tag">exposed | {{ tools|length }} tools</span></h4>
+    <pre>{% for t in tools %}{{ "%-26s"|format(t) }}{% if loop.index is divisibleby 2 %}
+{% endif %}{% endfor %}</pre>
+    <p class="small muted">Any MCP client (an AI assistant or your own agent) with these tools sees the same record as the war room and is held to the same approvals. Run <span class="mono">gw mcp</span> for stdio.</p>
+  </div>
+</div>
+{% endblock %}

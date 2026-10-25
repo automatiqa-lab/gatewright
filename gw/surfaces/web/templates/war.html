@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="kpis">
+  <div class="kpi {{ 'warn' if (kpis.unconfirmed or 0) > 0 else 'ok' }}"><div class="v">{{ kpis.due|int if kpis.due is not none else "—" }}</div><div class="l">Commitments due in {{ kpis.window }} days</div><div class="d">{{ kpis.unconfirmed|int if kpis.unconfirmed is not none else "—" }} unconfirmed</div></div>
+  <div class="kpi {{ 'crit' if kpis.at_risk else 'ok' }}"><div class="v">{{ kpis.at_risk }} / {{ kpis.projects }}</div><div class="l">Gates at risk</div><div class="d">readiness &lt; threshold, review &lt; 30 d</div></div>
+  <div class="kpi {{ 'warn' if kpis.losing else 'ok' }}"><div class="v">{{ kpis.losing }}</div><div class="l">Projects losing float</div><div class="d">{{ kpis.stale }} schedules &gt; 10 d unchanged</div></div>
+  <div class="kpi {{ 'ok' if (kpis.rate7 or 0) >= 0.7 else 'warn' }}"><div class="v">{{ kpis.rate7|pct }}</div><div class="l">Chase response, 7 d</div><div class="d">{{ kpis.silent }} parties silent</div></div>
+  <div class="kpi {{ 'warn' if (kpis.pslip or 0) > 0.35 else 'ok' }}"><div class="v">{{ kpis.pslip|num }}</div><div class="l">Portfolio P(slip), 30 d</div><div class="d">forecast | {{ kpis.above }} commitments &gt; 0.5 | advisory</div></div>
+</div>
+<div class="tbl-wrap"><table>
+  <tr><th>ID</th><th>Project</th><th>Gate</th><th>Readiness</th><th>Next milestone</th><th>Days</th><th>P(slip)</th><th>Owner</th><th>Status</th></tr>
+  {% for r in rows %}
+  {% set lvl = 'crit' if r.at_risk and r.readiness is not none and r.readiness < r.threshold - 0.2 else ('warn' if r.readiness is not none and r.readiness < r.threshold else '') %}
+  <tr{% if r.at_risk %} class="hatch amber"{% endif %}>
+    <td class="m"><a href="/projects/{{ r.code }}">{{ r.code }}</a></td>
+    <td>{% if r.code in changed %}<span class="rev" data-r="B" title="changed since yesterday's issue"></span>{% endif %}{{ r.name }}</td>
+    <td class="m">{{ (r.gate_name or "—").split(" | ")[0] }}</td>
+    <td><div class="bar {{ lvl }}"><i style="width:{{ ((r.readiness or 0) * 100)|round|int }}%"></i></div><span class="num">{{ r.readiness|pct }}{% if r.readiness is not none and r.readiness < r.threshold %} of {{ r.threshold|pct }}{% endif %}</span></td>
+    <td>{{ r.next_milestone or "—" }}</td>
+    <td class="r m">{{ r.days_to_review if r.days_to_review is not none else "—" }}</td>
+    <td class="m">{{ r.p_slip|num }}</td>
+    <td class="m">{{ r.owner or "—" }}</td>
+    <td>
+      {% if r.mandatory_missing and r.at_risk %}<span class="stamp red flat">{{ r.mandatory_missing }} missing</span>
+      {% elif r.recommendation == "hold" and r.days_to_review is not none and r.days_to_review <= 21 %}<span class="stamp red flat">Hold</span>
+      {% elif r.signals.get("contingency_burn", 0) > 0.05 %}<span class="tag amber">contingency +{{ (r.signals.contingency_burn * 100)|round|int }} pts</span>
+      {% elif r.signals.get("float_erosion", 0) < -5 %}<span class="tag amber">float {{ r.signals.float_erosion|int }} d</span>
+      {% elif r.recommendation in ("pass", "pass_with_actions") %}<span class="tag green">ready</span>
+      {% else %}<span class="tag green">on track</span>{% endif %}
+    </td>
+  </tr>
+  {% else %}<tr><td colspan="9" class="empty">No projects. Run <span class="mono">gw demo</span> or connect a schedule.</td></tr>{% endfor %}
+</table></div>
+<div class="two">
+  <div class="card"><h4>For decision today <span class="stamp amber">For decision</span></h4>
+    <div class="list">
+      {% for it in (brief["items"] if brief else []) %}
+      <div class="item"><div class="stripe {{ 'crit' if it.kind in ('decision', 'deadline') else ('warn' if it.kind == 'approval' else 'info') }}"></div><div>
+        <div class="t">{% if it.url %}<a href="{{ it.url }}">{{ it.title }}</a>{% else %}{{ it.title }}{% endif %}</div><div class="s">{{ it.why }}</div>
+        <div class="who">{{ it.stamp }} | depends: {{ it.depends }}{% if it.approval_id %} | <a href="/chasers">review draft</a>{% endif %}</div>
+      </div></div>
+      {% else %}<div class="item"><div class="stripe ok"></div><div><div class="t">Nothing for decision.</div></div></div>{% endfor %}
+    </div>
+  </div>
+  <div class="card"><h4>Overnight, by agents</h4>
+    {% if brief %}
+    <p class="small muted">{% for a, v in brief.overnight.items() if v.summary %}<b>{{ a|capitalize }}</b>: {{ v.summary }}{% if v.failed %} | <span class="tag red">{{ v.failed }} failed</span>{% endif %}.<br>{% endfor %}</p>
+    <p class="small muted">{{ brief.not_done.statement }}</p>
+    {% else %}<p class="small muted">No brief yet today.</p>{% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+Dear {{ contact }},
+
+Reference: {{ ref }} | {{ project }} | {{ title }}
+Due: {{ due }} | {{ silence }} business days without a reply{% if dependency %}
+Depends on it: {{ dependency }}{% endif %}
+
+This item now holds up {{ dependency_short }}. We need a confirmed date to plan the review.
+
+Reply with one line:
+CONFIRM
+FLAG - <new date YYYY-MM-DD> <reason>
+
+Sent by Gatewright on behalf of {{ owner }} (copy: {{ cc_names }})
+gw-ref {{ ref }}

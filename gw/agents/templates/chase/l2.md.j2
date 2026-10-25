@@ -1,0 +1,14 @@
+Dear {{ contact }},
+
+Reference: {{ ref }} | {{ project }} | {{ title }}
+Due: {{ due }} | second reminder{% if dependency %}
+Depends on it: {{ dependency }}{% endif %}
+
+We have no confirmation yet. Please confirm the date or tell us the new one.
+
+Reply with one line:
+CONFIRM
+FLAG - <new date YYYY-MM-DD> <reason>
+
+Sent by Gatewright on behalf of {{ owner }} (copy: {{ cc_names }})
+gw-ref {{ ref }}

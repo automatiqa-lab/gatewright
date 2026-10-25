@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block topright %}<span class="tag {{ 'green' if enabled else 'amber' }}">{{ ("assistant | " ~ conn.name) if enabled else "assistant off" }}</span>{% endblock %}
+{% block body %}
+<div class="row">
+  <div class="col">
+    {% if not enabled %}
+    <div class="card"><h4>The assistant is off</h4>
+      <p class="small">It answers questions from the record with Gatewright's own tools and proposes next steps for a person to take. It needs a chat model connection, any provider: a local Ollama model, an OpenAI-compatible endpoint, or a hosted API. Add the connection on <a href="/harness">Harness</a> or in <span class="mono">connections.yaml</span>, then set <span class="mono">models.assistant.connection</span> on <a href="/policies">Policies</a>.{% if conn_id %} The configured connection <span class="mono">{{ conn_id }}</span> does not exist.{% endif %}</p>
+    </div>
+    {% endif %}
+    {% for t in turns %}
+    {% set o = t.payload %}
+    <div class="card"{% if loop.last %} id="latest"{% endif %}>
+      <h4>{{ o.question }}</h4>
+      <div class="msg"><div style="white-space:pre-wrap">{{ o.answer }}</div></div>
+      {% if o.unverified %}<div class="err small" role="note"><b>Not found in the record</b> | {{ o.unverified|join(", ") }} - check before relying on {{ "it" if o.unverified|length == 1 else "them" }}.</div>{% endif %}
+      <div class="small muted">{{ ai_chip(o) }} {{ t.created_at|hhmm }} | {{ o.tool_calls|length }} tool calls | stop {{ o.stop }} | {{ o.tokens }} tokens{% if t.citations %} | cites {{ t.citations[:8]|join(", ") }}{% endif %}</div>
+      {% if o.proposals %}
+      <div class="list">
+        {% for p in o.proposals %}<div class="item"><div class="stripe warn"></div><div><div class="t">Proposed: {{ p.kind|replace("_", " ") }} | {{ p.target }}</div><div class="who">{{ p.reason }}{% if p.url %} | <a href="{{ p.url }}">review on its sheet</a>{% endif %}</div></div></div>{% endfor %}
+      </div>
+      {% endif %}
+      {% if o.tool_calls %}<details><summary class="small">What it looked up</summary>
+        <ul class="small">{% for c in o.tool_calls %}<li class="mono">{{ c.tool }} {{ c.args|tojson }}{% if not c.ok %} | refused{% endif %}</li>{% endfor %}</ul>
+      </details>{% endif %}
+    </div>
+    {% endfor %}
+    {% if job and job.state == "working" %}<div class="card" id="pending" hx-get="/ask/pending" hx-trigger="every 2s" hx-swap="outerHTML"><h4>Working on it</h4><p class="small muted">{{ job.question }}</p></div>{% endif %}
+    <div class="card"><h4>{{ "Ask a follow-up" if turns else "Ask a question" }}</h4>
+      <form method="post" action="/ask" class="form">
+        <input type="hidden" name="c" value="{{ conv }}">
+        <div class="field"><label for="question">Question</label><div class="ctl"><textarea class="inp" id="question" name="question" rows="3" maxlength="2000" required placeholder="Which gates are at risk this month, and what would move them?"{% if not enabled %} disabled{% endif %}></textarea></div></div>
+        <div class="field"><label></label><div class="ctl"><button class="btn" type="submit"{% if not enabled %} disabled{% endif %}>Ask</button>{% if turns %} <a class="btn sec" href="/ask">New conversation</a>{% endif %}</div></div>
+      </form>
+      <p class="small muted">Answers come from the record through read-only tools, as you, with your roles. The assistant proposes; people decide on the linked sheets. Forecasts are advisory.</p>
+    </div>
+  </div>
+  <div class="rail">
+    <div class="card"><h4>Recent questions</h4>
+      <div class="list">
+      {% for r in recent %}<div class="item"><div class="stripe info"></div><div><div class="t"><a href="/ask?c={{ r.payload.conversation }}">{{ r.payload.question[:70] }}</a></div><div class="who">{{ r.created_at|hhmm }}</div></div></div>
+      {% else %}<div class="item"><div><div class="t">None yet.</div></div></div>{% endfor %}
+      </div>
+    </div>
+    {% if enabled %}<div class="card"><h4>Limits</h4><p class="small muted">{{ cfg.get("max_steps", 8) }} steps, {{ cfg.get("max_tool_calls", 16) }} tool calls and {{ cfg.get("per_user_per_hour", 30) }} questions an hour per person. External models see redacted text only.</p></div>{% endif %}
+  </div>
+</div>
+{% endblock %}

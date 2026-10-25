@@ -1,0 +1,139 @@
+# Harness connections - reference shape. Secrets are key names in the OS keyring / env, never values.
+connections:
+  - id: p6-main
+    contract: ScheduleSource
+    adapter: p6_mcp
+    name: P6 XER exports, portfolio DC (p6-mcp, read only)
+    config: {command: p6-mcp, folder: "./drop/p6", args: [serve, --transport, stdio, --no-mutation, --read-only,
+             --allowed-dir, "./drop/p6", --output-dir, "./drop/p6-scratch"]}
+    scopes: [read]
+    owner: m.devries
+    sync_every_minutes: 15
+  - id: xer-drop
+    contract: ScheduleSource
+    adapter: longpath_mcp
+    name: XER / MSPDI drop folder (vendors)
+    config: {command: longpath, folder: "./drop/schedules"}
+    scopes: [read]
+    owner: pmo
+    sync_every_minutes: 30
+  - id: planner-dc
+    contract: PlanSource
+    adapter: planner_graph
+    name: Microsoft Planner, premium plan DC programme
+    config: {tenant: $GRAPH_TENANT, client_id: $GRAPH_CLIENT_ID, secret_ref: graph-secret, plan_ids: ["<plan-id>"]}
+    scopes: [read, comment]
+    mapping: {label_to_deliverable: true, bucket_to_package: true}
+    owner: pmo
+    sync_every_minutes: 15
+  - id: jira-nordflow
+    contract: PlanSource
+    adapter: jira_rest
+    name: Jira DC-02 WCS integration (Nordflow)
+    config: {base_url: "https://nordflow.example.atlassian.net", project_key: "WCS", token_ref: jira-token}
+    scopes: [read]
+    mapping: {label_to_deliverable: true}
+    owner: nordflow
+    sync_every_minutes: 60
+  - id: onedrive-cp
+    contract: DocumentSource
+    adapter: onedrive_graph
+    name: OneDrive / SharePoint Capital Projects
+    config: {tenant: $GRAPH_TENANT, client_id: $GRAPH_CLIENT_ID, secret_ref: graph-secret, drive_ids: ["<drive-id>"], root_path: "/Capital Projects"}
+    scopes: [read, link]
+    owner: pmo
+    sync_every_minutes: 15
+  - id: mail-shared
+    contract: MessageChannel
+    adapter: m365_mail_graph
+    name: Shared mailbox gatewright@example.com
+    config: {tenant: $GRAPH_TENANT, client_id: $GRAPH_CLIENT_ID, secret_ref: graph-secret, mailbox: "gatewright@example.com"}
+    scopes: [read, send_as]
+    owner: pmo
+    sync_every_minutes: 5
+  - id: teams-dc
+    contract: MessageChannel
+    adapter: teams_graph
+    name: Teams channel DC programme
+    config: {tenant: $GRAPH_TENANT, client_id: $GRAPH_CLIENT_ID, secret_ref: graph-secret, team_id: "<team-id>", channel_id: "<channel-id>"}
+    scopes: [read, post_cards]
+    owner: pmo
+    sync_every_minutes: 5
+  - id: sap-weekly
+    contract: CostSource
+    adapter: csv_drop
+    name: SAP PS export, weekly
+    config: {folder: "./drop/cost", schema: cost-csv-v1}
+    scopes: [read]
+    owner: l.jansen
+    sync_every_minutes: 1440
+  - id: cal-gates
+    contract: CalendarSource
+    adapter: m365_calendar_graph
+    name: M365 calendar Gate reviews
+    config: {tenant: $GRAPH_TENANT, client_id: $GRAPH_CLIENT_ID, secret_ref: graph-secret, calendar: "Gate reviews"}
+    scopes: [read, create_events]
+    owner: pmo
+    sync_every_minutes: 60
+  - id: entra
+    contract: IdentitySource
+    adapter: oidc
+    name: Entra ID
+    config: {issuer: "https://login.microsoftonline.com/<tenant>/v2.0", client_id: $OIDC_CLIENT_ID, secret_ref: oidc-secret, group_map: {"GW-PortfolioLeads": portfolio_lead, "GW-PMs": project_manager}}
+    scopes: [login]
+    owner: it
+  - id: rag-eng
+    contract: RetrievalSource
+    adapter: mcp_generic
+    name: sharepoint-rag (engineering library)
+    config: {server: "mcp://localhost:7020", search_tool: "search", read_tool: "read"}
+    scopes: [read]
+    owner: engineering
+  - id: ollama
+    contract: ModelProvider
+    adapter: ollama
+    name: Ollama local
+    config: {base_url: "http://localhost:11434", llm: "llama3.1:8b", embedding: "bge-m3"}
+    scopes: [infer]
+    owner: pmo
+  # Chat models for drafting and the assistant. Any one of them can be named in
+  # policies.models.*.connection; Gatewright itself names no provider or model.
+  - id: llm-openai-compatible
+    contract: ModelProvider
+    adapter: openai_compatible
+    name: Self-hosted model (vLLM / LM Studio / llama.cpp)
+    config: {base_url: "http://localhost:8000/v1", model: "your-model", external: false}
+    scopes: [infer]
+    owner: pmo
+  - id: llm-hosted
+    contract: ModelProvider
+    adapter: anthropic_api
+    name: Hosted model (Anthropic API, redacted)
+    config: {model: "claude-opus-5-5", secret_ref: anthropic-api-key}
+    scopes: [infer]
+    owner: pmo
+  - id: mitra
+    contract: ModelProvider
+    adapter: mitra_v2
+    name: Mitra-v2 tabular FM (local weights)
+    config: {device: "cpu"}
+    scopes: [infer]
+    owner: pmo
+  # In-context tabular models on a GPU box (gw.harness.tabular_server), reached through an SSH tunnel:
+  #   ssh -N -L 18765:127.0.0.1:8765 <gpu-host>   (the server binds the box's loopback only)
+  # The token is read by key name from GW_SECRET_GPU_TABULAR; the engine falls back to CatBoost when
+  # the box is off, and picks among healthy models by recorded calibration.
+  - id: gpu-mitra
+    contract: ModelProvider
+    adapter: remote_tabular
+    name: Mitra-v2 on the GPU box
+    config: {url: "http://127.0.0.1:18765", model: mitra, secret_ref: gpu-tabular}
+    scopes: [infer]
+    owner: pmo
+  - id: gpu-tabicl
+    contract: ModelProvider
+    adapter: remote_tabular
+    name: TabICL on the GPU box
+    config: {url: "http://127.0.0.1:18765", model: tabicl, secret_ref: gpu-tabular}
+    scopes: [infer]
+    owner: pmo

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="tabs" role="tablist" aria-label="Policy sections">
+  {% for s in sections %}<a role="tab" href="/policies?section={{ s }}" aria-selected="{{ 'true' if s == section else 'false' }}">{{ s|replace("_", " ") }}</a>{% endfor %}
+</div>
+<div class="row">
+  <div class="col" role="tabpanel" aria-label="{{ section }}">
+    <div class="card"><h4>{{ section|replace("_", " ")|capitalize }} <span class="tag">rev {{ rev.rev }}</span></h4>
+      <div class="form">
+        {% for k, v in fields %}<div class="field"><label>{{ k|replace("_", " ") }}</label><div class="ctl"><span class="inp">{{ v }}</span></div></div>
+        {% else %}<p class="empty">Section not set; defaults apply.</p>{% endfor %}
+      </div>
+    </div>
+    <div class="card"><h4>Hard limits <span class="tag red">code, not policy</span></h4>
+      <div class="inline"><span class="tag red">never write to a schedule tool</span><span class="tag red">never message a sponsor or authority without approval</span><span class="tag red">external LLM only after redaction</span></div>
+    </div>
+    <div class="card"><h4>Automation readiness {{ "%.2f"|format(readiness) if readiness is not none else "—" }} <span class="tag">defined here</span></h4>
+      <p class="small muted">Share of drafted agent outputs a person approved without editing, over the last {{ readiness_def.get("window_days", 30) }} days ({{ readiness_def.get("definition", "") }}). It gates autonomy: an agent may be promoted one level only when its own score stays above the promotion threshold for the set number of weeks. Promotion is a policy change, never automatic.</p>
+    </div>
+  </div>
+  <div class="rail" style="flex-basis:460px">
+    <div class="card"><h4>policies.yaml</h4>
+      <form method="post" action="/policies" class="form">
+        <textarea id="pol" class="code" name="yaml_text" spellcheck="false" aria-label="Policies YAML">{{ yaml_text }}</textarea>
+        <div class="field"><label for="note">Change note</label><div class="ctl"><input id="note" class="inp" name="note" style="width:100%"></div></div>
+        <div class="inline">
+          <button class="btn sec" type="button" hx-post="/policies" hx-vals='{"action": "diff"}' hx-include="#pol" hx-target="#diff">Diff rev {{ rev.rev }}</button>
+          <button class="btn confirm-btn" type="submit" name="action" value="save">Save rev {{ rev.rev + 1 }}</button>
+        </div>
+        <div id="diff" aria-live="polite"></div>
+      </form>
+      <p class="small muted">Validated against schemas/policies.schema.json; errors name the JSON pointer. Every save is a revision with author, diff and time.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

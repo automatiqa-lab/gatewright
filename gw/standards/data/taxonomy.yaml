@@ -1,0 +1,9 @@
+# Semantic taxonomy. Editable on GW-310; a change is a new revision.
+rev: 1
+reply_intents: [CONFIRM, FLAG, QUESTION, DELEGATE, OOO, DECLINE, UNRELATED]
+document_types: [specification, permit_decision, estimate, schedule_export, test_report, rfi, change_order, minutes, drawing, invoice, other]
+ignored_document_types: [invoice]
+entities: [date, amount, package_id, commitment_ref, revision, party, site, person, new_due_date, reason]
+# intents that trigger extraction (dates, reasons, delegates)
+extract_for_intents: [FLAG, QUESTION, DELEGATE]
+extract_for_doc_types: [permit_decision, estimate, change_order, test_report]

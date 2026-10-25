@@ -1,0 +1,46 @@
+# Gate model: three gates for small urban sites.
+id: three-gate
+name: Three gates (site, design, build)
+applies_to: [urban]
+dimensions: [schedule, cost, permits, design, vendors, systems, ops_readiness, forecast]
+gates:
+  - id: g1
+    name: Gate 1 | Site
+    order: 1
+    purpose: the site works
+    threshold: 0.80
+    decisions: [pass, pass_with_actions, hold, stop]
+    decided_by: [portfolio_lead]
+    lead_time_days: 7
+    actions_due_days: 21
+    deliverables:
+      - {id: site_decision, name: Site decision with lease or purchase terms, weight: 40, mandatory: true, evidence: document, accept_roles: [portfolio_lead], tags: [permits]}
+      - {id: zoning_check, name: Zoning and access check, weight: 30, mandatory: true, evidence: document, accept_roles: [project_manager], party_role: authority, tags: [permits]}
+      - {id: estimate_class4, name: Class 4 estimate, weight: 30, mandatory: true, evidence: document, accept_roles: [project_manager], check: "project.estimate_class <= 4"}
+  - id: g2
+    name: Gate 2 | Design
+    order: 2
+    purpose: ready to commit
+    threshold: 0.85
+    decisions: [pass, pass_with_actions, hold, stop]
+    decided_by: [investment_committee]
+    lead_time_days: 10
+    actions_due_days: 21
+    deliverables:
+      - {id: layout_mhe, name: Layout and goods-to-person system selection, weight: 35, mandatory: true, evidence: document, accept_roles: [sme:engineering], party_role: vendor, tags: [design, systems, vendors]}
+      - {id: permits, name: Permits in hand, weight: 25, mandatory: true, evidence: permit_ref, accept_roles: [project_manager], party_role: authority, tags: [permits]}
+      - {id: estimate_class2, name: Class 2 estimate, weight: 25, mandatory: true, evidence: document, accept_roles: [project_manager], check: "project.estimate_class <= 2"}
+      - {id: ops_plan, name: Operating and staffing plan, weight: 15, mandatory: false, evidence: document, accept_roles: [sme:operations], tags: [ops]}
+  - id: g3
+    name: Gate 3 | Build and open
+    order: 3
+    purpose: open
+    threshold: 0.90
+    decisions: [pass, pass_with_actions, hold]
+    decided_by: [project_director]
+    lead_time_days: 7
+    actions_due_days: 14
+    deliverables:
+      - {id: sat, name: SAT of the system, weight: 40, mandatory: true, evidence: test_report, accept_roles: [sme:systems], party_role: vendor, tags: [systems]}
+      - {id: occupancy, name: Occupancy and fire certificate, weight: 30, mandatory: true, evidence: permit_ref, accept_roles: [project_manager], party_role: authority, tags: [permits]}
+      - {id: go_live_plan, name: Go-live and ramp-up plan, weight: 30, mandatory: true, evidence: document, accept_roles: [sme:operations], tags: [ops]}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block topright %}
+<span class="tag">{{ p.capex_currency }} {{ "%.0f"|format(p.capex_amount / 1e6) }}m | class {{ p.estimate_class }}</span>
+<span class="tag {{ 'amber' if days_to_review <= 21 else '' }}">review {{ gi.planned_review_at|ddmmm }} | {{ days_to_review }} d</span>
+{% if pack %}<a class="btn sec" href="/projects/{{ p.code }}/gates/{{ gi.gate_id }}/pack">Review pack | {{ pack.status }}</a>{% endif %}
+<form method="post" action="/projects/{{ p.code }}/gates/{{ gi.gate_id }}/gatekeeper" class="inline"><button class="btn" type="submit">Run Gatekeeper</button></form>
+{% endblock %}
+{% block body %}
+<div class="gate-track" role="list" aria-label="Gate sequence">
+  {% for g in track %}<div class="gate {{ g.state }}" role="listitem"><b>{{ g.name }}</b><span>{{ g.sub }}</span></div>{% endfor %}
+</div>
+<div class="row">
+  <div class="col">
+    <div class="tbl-wrap"><table>
+      <tr><th>Deliverable (from gate model)</th><th>Wt</th><th>Owner</th><th>Party</th><th>Due</th><th>Status</th><th>Evidence</th></tr>
+      {% for r in rows %}
+      <tr{% if r.hatch %} class="{{ r.hatch }}"{% endif %}>
+        <td>{% if r.c and r.c.status == "flagged" %}<span class="rev" data-r="B"></span>{% endif %}{{ r.d.name }}{% if r.d.mandatory %} <span class="tag">mandatory</span>{% endif %}
+          {% if r.c %}<div class="num">{{ r.c.code }}{% if r.gap %} | {{ r.gap.reason }}{% endif %}</div>{% endif %}</td>
+        <td class="m">{{ r.d.weight|int }}</td>
+        <td class="m">{{ r.owner }}</td>
+        <td class="m">{{ r.party }}</td>
+        <td class="m">{{ r.c.due_at|ddmmm if r.c else "—" }}</td>
+        <td><span class="tag {{ r.colour }}">{{ r.status_label }}</span></td>
+        <td class="small" style="word-break:break-word;min-width:160px">
+          {% if r.ev %}{{ r.ev.title }}{% if r.ev.sha256 %} | hash ok{% endif %}
+            {% if r.ev.rejected_reason %}<div class="small">rejected: {{ r.ev.rejected_reason }}</div>{% endif %}
+            {% if r.c and r.c.status == "submitted" %}
+            <form method="post" action="/evidence/{{ r.ev.id }}/decide" class="inline" style="margin-top:4px">
+              <button class="btn small confirm-btn" name="accept" value="1" type="submit">Accept</button>
+              <input class="inp" name="reason" placeholder="reason to reject" aria-label="Reason to reject">
+              <button class="btn small sec" name="accept" value="0" type="submit">Reject</button>
+            </form>{% endif %}
+          {% else %}—{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table></div>
+  </div>
+  <div class="rail">
+    <div class="card"><h4>Readiness {{ score.readiness|pct }} <span class="stamp {{ stamp[1] }}">{{ stamp[0] }}</span></h4>
+      <div class="bar {{ 'crit' if score.readiness < score.threshold - 0.2 else ('warn' if score.readiness < score.threshold else '') }}" style="height:10px"><i style="width:{{ (score.readiness * 100)|round|int }}%"></i></div>
+      <p class="small muted">Threshold {{ score.threshold|pct }} copied from gate model {{ gi.gate_model_id }} rev {{ gi.gate_model_rev }} at creation. {{ score.gaps|length }} gaps; {{ score.gaps|selectattr("mandatory")|list|length }} mandatory. Submitted evidence counts half until a person accepts it.</p>
+      {% if fg and fg.p_pass_on_date is not none %}<p class="small">P(pass on {{ gi.planned_review_at|ddmmm }}) <b>{{ fg.p_pass_on_date|num }}</b> <span class="stamp blue flat">Advisory</span></p>{% endif %}
+    </div>
+    <div class="card"><h4>Gatekeeper says {% if assessment %}<span class="tag">{{ assessment.created_at|hhmm }}</span>{% endif %}</h4>
+      {% if assessment %}
+        <p class="small">{{ assessment.payload.says }}</p>
+        <div class="list">
+        {% for g in score.gaps[:4] %}
+          <div class="item"><div class="stripe {{ 'crit' if g.mandatory else 'warn' }}"></div><div>
+            <div class="t">{{ g.commitment or g.deliverable_id }} | {{ g.name }}</div>
+            <div class="s">{{ g.reason }}{% if g.p_slip is not none %} | P(slip) {{ g.p_slip|num }}{% endif %}</div>
+            {% if g.commitment %}
+            <div style="margin-top:4px" hx-target="this" hx-swap="innerHTML">
+              <button class="btn small sec" hx-post="/forecast/whatif/{{ g.commitment }}" hx-vals='{"lever": "escalate_today"}'>What if: escalate today</button>
+              <button class="btn small sec" hx-post="/forecast/whatif/{{ g.commitment }}" hx-vals='{"lever": "evidence_submitted"}'>What if: split submission</button>
+            </div>{% endif %}
+          </div></div>
+        {% endfor %}
+        </div>
+      {% else %}<p class="small muted">No assessment yet. Run the Gatekeeper.</p>{% endif %}
+    </div>
+    <div class="card"><h4>Stamp the decision</h4>
+      {% if gi.decision == "pending" %}
+      <form method="post" action="/projects/{{ p.code }}/gates/{{ gi.gate_id }}/decide" class="form">
+        <div class="field"><label for="dec">Decision</label><div class="ctl">
+          <select id="dec" class="inp" name="decision">{% for d in gi.decisions_allowed %}<option value="{{ d }}"{% if d == score.recommendation %} selected{% endif %}>{{ d|replace("_", " ") }}</option>{% endfor %}</select></div></div>
+        <div class="field"><label for="note">Note</label><div class="ctl"><input id="note" class="inp" name="note" style="width:100%"></div></div>
+        <div><button class="btn confirm-btn" type="submit">Stamp</button> <span class="small muted">decided by {{ gi.decided_by_roles|join(", ")|replace("_", " ") }}</span></div>
+      </form>
+      {% else %}<p class="small">Stamped <span class="stamp {{ 'green' if gi.decision in ('pass', 'pass_with_actions') else 'red' }} flat">{{ gi.decision|replace("_", " ") }}</span> {{ gi.decided_at|ddmmm }}.</p>{% endif %}
+    </div>
+    {% if assessment and assessment.payload.lessons %}
+    <div class="card"><h4>Lessons cited</h4><p class="small muted">{% for l in assessment.payload.lessons %}{{ l.code }} "{{ l.title }}"<br>{% endfor %}</p></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

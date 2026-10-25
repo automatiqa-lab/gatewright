@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="row">
+  <div class="col">
+    {% if drawing.boxes %}
+    <div class="drawing dep" style="border-width:1px">
+      <svg viewBox="0 0 {{ drawing.width }} {{ drawing.height }}" role="img" aria-label="{{ drawing.n_packages }} work packages across {{ drawing.n_projects }} projects; solid lines are accepted dependencies, dashed blue lines are proposals from the Scout agent">
+        {% for x, code in drawing.cols %}<text x="{{ x }}" y="24" class="t">{{ code }}</text>{% endfor %}
+        {% for e in drawing.edges %}<line x1="{{ e.x1 }}" y1="{{ e.y1 }}" x2="{{ e.x2 }}" y2="{{ e.y2 }}" class="ln{% if e.proposed %} blue mcp{% endif %}" style="stroke-width:{{ 2 if e.proposed else 1.6 }}"><title>{{ e.kind|replace("_", " ") }}</title></line>{% endfor %}
+        {% for b in drawing.boxes %}<rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" class="box"/><text x="{{ b.x + 8 }}" y="{{ b.y + 18 }}" class="tt">{{ b.code }}</text><text x="{{ b.x + 8 }}" y="{{ b.y + 35 }}">{{ b.name }}</text>{% endfor %}
+      </svg>
+    </div>
+    <div class="legend" style="border:1px solid var(--line);border-top:none"><span><i></i>accepted by a person</span><span><i class="mcp" style="border-color:var(--blue)"></i>proposed by Scout, awaiting review</span></div>
+    {% else %}<p class="empty">No dependencies yet. The Scout runs at 06:08.</p>{% endif %}
+    {% if accepted %}
+    <div class="tbl-wrap"><table><tr><th>Accepted</th><th>Kind</th><th>Reason</th><th>Saves</th><th></th></tr>
+      {% for d in accepted %}<tr><td class="m">{{ d.from }} → {{ d.to }}</td><td class="m">{{ d.kind|replace("_", " ") }}</td><td class="small">{{ d.reason }}</td><td class="m">{{ ("%d d"|format(d.saved_days_estimate)) if d.saved_days_estimate else "—" }}</td>
+        <td><form method="post" action="/deps/{{ d.id }}/decide" class="inline"><input type="hidden" name="accept" value="0"><input class="inp" name="reason" placeholder="reason" aria-label="Reason to reject" required><button class="btn small sec" type="submit">Reject</button></form></td></tr>{% endfor %}
+    </table></div>{% endif %}
+  </div>
+  <div class="rail" style="flex-basis:380px">
+    <div class="card"><h4>Scout proposals <span class="tag blue">{{ proposed|length }}</span></h4>
+      <div class="list">
+      {% for d in proposed %}
+        <div class="item"><div class="stripe info"></div><div>
+          <div class="t">{{ d.kind|replace("_", " ") }} | {{ d.projects|join(" / ") }}</div>
+          <div class="s">{{ d.from }} → {{ d.to }}. {{ d.reason }}{% if d.saved_days_estimate %} Saves about {{ d.saved_days_estimate|int }} d.{% endif %}</div>
+          <form method="post" action="/deps/{{ d.id }}/decide" class="inline" style="margin-top:6px">
+            <button class="btn small" name="accept" value="1" type="submit">Accept</button>
+            <input class="inp" name="reason" placeholder="reason (optional)" aria-label="Reason">
+            <button class="btn small sec" name="accept" value="0" type="submit">Reject</button>
+          </form>
+        </div></div>
+      {% else %}<div class="item"><div class="stripe ok"></div><div><div class="t">No proposals waiting.</div></div></div>{% endfor %}
+      </div>
+    </div>
+    {% if rejected %}<div class="card"><h4>Rejected (suppressed 90 d)</h4><p class="small muted">{% for d in rejected %}{{ d.from }} → {{ d.to }} | {{ d.kind|replace("_", " ") }}<br>{% endfor %}</p></div>{% endif %}
+  </div>
+</div>
+{% endblock %}

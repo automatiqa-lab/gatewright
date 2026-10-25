@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block topright %}<span class="tag">The gatekeeper cites these by tag overlap with open gaps</span>{% endblock %}
+{% block body %}
+<div class="row">
+  <div class="col">
+    <div class="tbl-wrap"><table>
+      <tr><th>Code</th><th>Lesson</th><th>Tags</th><th>From</th><th>Cited</th><th>Cited on</th></tr>
+      {% for r in rows %}
+      <tr>
+        <td class="m">{{ r.l.code }}</td>
+        <td><div class="t"><b>{{ r.l.title }}</b></div><div class="small">{{ r.l.text }}</div></td>
+        <td>{% for t in r.l.tags %}<span class="tag">{{ t }}</span> {% endfor %}</td>
+        <td class="m">{{ r.source }}</td>
+        <td class="m">{{ r.cited }}</td>
+        <td class="small">{{ r.where|join(", ") or "—" }}</td>
+      </tr>
+      {% else %}<tr><td colspan="6" class="empty">No lessons yet. Add the first one on the right.</td></tr>{% endfor %}
+    </table></div>
+  </div>
+  <div class="rail" style="flex-basis:380px">
+    <div class="card"><h4>Add a lesson</h4>
+      <form method="post" action="/standards/lessons" class="form">
+        <div class="field"><label for="title">Title</label><div class="ctl"><input class="inp" id="title" name="title" required minlength="8"></div></div>
+        <div class="field"><label for="text">What happened</label><div class="ctl"><textarea class="inp" id="text" name="text" rows="4" required minlength="20"></textarea></div></div>
+        <div class="field"><label for="tags">Tags</label><div class="ctl"><input class="inp" id="tags" name="tags" placeholder="vendor-data, hse, permits"></div></div>
+        <div class="field"><label for="source">Source project</label><div class="ctl"><select class="inp" id="source" name="source"><option value="">—</option>{% for c in project_codes %}<option>{{ c }}</option>{% endfor %}</select></div></div>
+        <div class="field"><label></label><div class="ctl"><button class="btn" type="submit">Add lesson</button></div></div>
+      </form>
+      <p class="small">Tags matter: a lesson is cited when its tags overlap the deliverable types and disciplines of a gate's open gaps.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

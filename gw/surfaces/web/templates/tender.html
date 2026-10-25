@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block topright %}
+{% if cur %}<form method="post" action="/tender/{{ cur.code }}/run" class="inline"><button class="btn" type="submit">Run tender check</button></form>{% endif %}
+{% endblock %}
+{% block body %}
+<div class="seg" role="tablist" aria-label="Packages">
+  {% for w in pkgs %}<a role="tab" aria-selected="{{ 'true' if cur and w.code == cur.code else 'false' }}" class="{{ 'on' if cur and w.code == cur.code else '' }}" href="/tender?package={{ w.code }}">{{ w.code }} | {{ w.discipline }}</a>{% endfor %}
+</div>
+{% if not cur %}
+<div class="note">No packages in a tender state.</div>
+{% else %}
+<div class="row">
+  <div class="col">
+    <div class="card"><h4>{{ cur.code }} | {{ cur.name }} <span class="tag amber">{{ cur.tender_state }}</span></h4>
+    {% if check %}
+      <div class="tbl-wrap"><table>
+        <tr><th>Section (template | {{ check.discipline }})</th><th>In the package</th></tr>
+        {% for r in check.sections %}<tr{% if not r.present %} class="hatch"{% endif %}><td>{{ r.section|capitalize }}</td><td>{% if r.present %}<span class="tag green">present</span>{% else %}<span class="tag red">missing</span>{% endif %}</td></tr>{% endfor %}
+      </table></div>
+      <p class="small muted">Checked {{ when|ddmmm }} {{ when|hhmm }} by the Tender agent against <span class="mono">standards/package_templates.yaml</span>. {{ check.missing|length }} sections missing. Draft: a person decides what goes out.</p>
+    {% else %}<p class="small muted">Not checked yet. Run the tender check.</p>{% endif %}
+    </div>
+  </div>
+  <div class="col">
+    <div class="card"><h4>Bid comparison {% if unlocked %}<span class="stamp green">Commercial open</span>{% else %}<span class="stamp amber">Commercial locked</span>{% endif %}</h4>
+    {% if bids and bids.bids %}
+      <div class="tbl-wrap"><table>
+        <tr><th>Bidder</th><th>Technical compliance</th><th>Gaps</th><th>Price</th></tr>
+        {% for b in bids.bids %}<tr>
+          <td>{{ b.vendor }}</td>
+          <td><div class="bar{{ ' warn' if b.technical < 0.85 else '' }}{{ ' crit' if b.technical < 0.7 else '' }}"><i style="width:{{ (b.technical * 100)|round|int }}%"></i></div><span class="num">{{ (b.technical * 100)|round|int }}%</span></td>
+          <td class="small">{{ b.gaps|join(", ") if b.gaps else "none" }}</td>
+          <td class="m">{% if b.price is not none %}{{ "{:,.0f}".format(b.price) }} {{ b.currency or "" }}{% else %}<span class="hatch amber">locked</span>{% endif %}</td>
+        </tr>{% endfor %}
+      </table></div>
+    {% else %}<p class="small muted">No bids read yet.</p>{% endif %}
+      <h4 style="margin-top:12px">Technical sign-off <span class="tag">{{ sign|length }} of 2 roles</span></h4>
+      <div class="list">
+        {% for s in sign %}<div class="item"><div class="stripe ok"></div><div><div class="t">{{ s.user }}</div><div class="who">{{ s.role }} | {{ s.at[:16]|replace("T", " ") }}</div></div></div>
+        {% else %}<div class="item"><div class="stripe info"></div><div class="s">No sign-off yet.</div></div>{% endfor %}
+      </div>
+      {% if not unlocked %}<form method="post" action="/tender/{{ cur.code }}/signoff" class="inline" style="margin-top:8px"><button class="btn" type="submit">Record my technical sign-off</button></form>{% endif %}
+      <p class="small muted">Prices stay hidden until two people with different accepting roles (engineering, procurement, systems or project manager) have signed the technical evaluation. Technical before commercial; the agent never signs.</p>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

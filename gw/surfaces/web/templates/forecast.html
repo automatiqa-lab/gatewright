@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block topright %}
+<span class="tag">model: {{ model or "—" }}{% if degraded %} | fallback in use{% endif %}</span>
+{% if cal %}<span class="tag {{ 'green' if cal.ece <= 0.05 else 'amber' }}">Brier {{ cal.brier|num }} | ECE {{ cal.ece|num }} | n {{ cal.n }}</span>{% endif %}
+<span class="stamp blue flat">Advisory</span>
+{% endblock %}
+{% block body %}
+<div class="kpis">
+  <div class="kpi {{ 'warn' if above else 'ok' }}"><div class="v">{{ above }}</div><div class="l">Commitments with P(slip) &gt; 0.5</div><div class="d">of {{ due30 }} due in 30 d | {{ n_rows }} open scored</div></div>
+  {% for g in gate_rows[:3] %}
+  <div class="kpi {{ 'crit' if g.p < 0.3 else ('warn' if g.p < 0.6 else 'ok') }}"><div class="v">{{ g.p|num }}</div><div class="l">{{ g.code }} | P(pass on {{ g.review|ddmmm }})</div><div class="d">{{ g.gate }}</div></div>
+  {% endfor %}
+</div>
+{% if degraded %}<div class="note">forecast_degraded: {{ degraded.inputs.get("reason", "") }}</div>{% endif %}
+<div class="row">
+  <div class="col">
+    <div class="tbl-wrap"><table>
+      <tr><th>Commitment</th><th>Due</th><th>P(slip)</th><th>Delay P50 / P90</th><th>Top drivers</th><th>What-if</th></tr>
+      {% for r in rows %}
+      <tr{% if r.p_slip > 0.5 %} class="hatch amber"{% endif %}>
+        <td><span class="m">{{ r.commitment }}</span> | {{ r.title }}</td>
+        <td class="m">{{ r.due|ddmmm }}</td>
+        <td class="m">{{ r.p_slip|num }}{% if r.p_slip > flag %} <span class="tag amber">flag</span>{% endif %}</td>
+        <td class="m">{{ "%d"|format(r.p50_days or 0) }} / {{ "%d"|format(r.p90_days or 0) }} d</td>
+        <td class="small">{% for d in r.drivers %}{{ d.feature|replace("_", " ") }} {{ d.value if d.value is string else ("%g"|format(d.value)) }} ({{ "%+.2f"|format(d.contribution) }}){{ " | " if not loop.last }}{% else %}—{% endfor %}</td>
+        <td class="small" hx-target="this" hx-swap="innerHTML"><button class="btn small sec" hx-post="/forecast/whatif/{{ r.commitment }}" hx-vals='{"lever": "escalate_today"}'>escalate today</button></td>
+      </tr>
+      {% else %}<tr><td colspan="6" class="empty">No forecast yet. The prediction engine runs at 06:10 (<span class="mono">gw forecast run</span>).</td></tr>{% endfor %}
+    </table></div>
+    <div class="card"><h4>Features the model sees</h4><p class="small muted">days to due | deliverable type and mandatory flag | gate and gate model | project archetype and country | party kind and response history (median reply days, silence rate, flag rate, sample size) | chases sent and replies | silence days | escalation level | owner open and overdue items | open dependencies | estimate class | month | vendor lead-time class | evidence submitted | schedule sync age | permit and insurer flags | prior slips of the same party on the same type | synthetic-prior flag. No free text. Forecasts never change a status.</p></div>
+  </div>
+  <div class="rail" style="flex-basis:340px">
+    <div class="card"><h4>Calibration {% if cal %}<span class="tag">n = {{ cal.n }} | {{ cal.model_id }}</span>{% endif %}</h4>
+      {% if cal and cal.table %}
+      <svg viewBox="0 0 300 150" width="100%" role="img" aria-label="Reliability diagram: observed slip rate per predicted probability bin against the diagonal of perfect calibration; ECE {{ cal.ece|num }}">
+        <line x1="30" y1="130" x2="290" y2="130" style="stroke:var(--line-strong)"/><line x1="30" y1="130" x2="30" y2="10" style="stroke:var(--line-strong)"/>
+        <line x1="30" y1="130" x2="290" y2="10" style="stroke:var(--ink-3);stroke-dasharray:4 3"/>
+        <g style="fill:var(--blue)">{% for b in cal.table %}{% set h = (b.observed * 120)|round(1) %}<rect x="{{ 33 + b.bin * 26 }}" y="{{ 130 - h }}" width="20" height="{{ h }}"><title>bin {{ b.lo }}-{{ b.hi }}: predicted {{ b.predicted }}, observed {{ b.observed }}, n {{ b.n }}</title></rect>{% endfor %}</g>
+        <text x="30" y="145" class="lbl" style="font-family:var(--mono);font-size:10px;fill:var(--ink-3)">0.0</text><text x="160" y="145" text-anchor="middle" style="font-family:var(--mono);font-size:10px;fill:var(--ink-3)">predicted P(slip)</text><text x="276" y="145" style="font-family:var(--mono);font-size:10px;fill:var(--ink-3)">1.0</text>
+      </svg>
+      <p class="small muted">Bars = observed slip rate per predicted bin; dashed = perfect calibration. Time-based split on closed history. The model is retired to the CatBoost fallback above ECE 0.08.</p>
+      {% else %}<p class="small muted">No calibration yet (<span class="mono">gw forecast calibrate</span>).</p>{% endif %}
+    </div>
+    <div class="card"><h4>Gate instances | P(pass on date)</h4>
+      <div class="list">{% for g in gate_rows %}<div class="item"><div class="stripe {{ 'crit' if g.p < 0.3 else ('warn' if g.p < 0.6 else 'ok') }}"></div><div><div class="t">{{ g.code }} | {{ g.gate }}</div><div class="s">{{ g.p|num }} | review {{ g.review|ddmmm }}</div></div></div>{% endfor %}</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

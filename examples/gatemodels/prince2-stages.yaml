@@ -1,0 +1,46 @@
+# Gate model: PRINCE2-style stage boundaries. Generic; one delivery stage shown, add more as needed.
+id: prince2-stages
+name: PRINCE2 stage boundaries
+applies_to: []
+dimensions: [schedule, cost, design, vendors, systems, dependencies, forecast]
+gates:
+  - id: initiation
+    name: Initiation | Authorise the project
+    order: 1
+    purpose: project initiation documentation approved
+    threshold: 0.80
+    decisions: [pass, pass_with_actions, hold, stop]
+    decided_by: [sponsor, portfolio_lead]
+    lead_time_days: 7
+    actions_due_days: 21
+    deliverables:
+      - {id: business_case, name: Business case, weight: 30, mandatory: true, evidence: document, accept_roles: [sponsor, portfolio_lead]}
+      - {id: pid, name: Project initiation documentation, weight: 30, mandatory: true, evidence: document, accept_roles: [project_manager]}
+      - {id: project_plan, name: Project plan, weight: 20, mandatory: true, evidence: document, accept_roles: [project_manager], tags: [schedule]}
+      - {id: risk_register, name: Risk register, weight: 20, mandatory: false, evidence: document, accept_roles: [project_manager]}
+  - id: stage1
+    name: Stage boundary 1 | End of delivery stage
+    order: 2
+    purpose: authorise the next stage
+    threshold: 0.85
+    decisions: [pass, pass_with_actions, hold, stop]
+    decided_by: [sponsor]
+    lead_time_days: 7
+    actions_due_days: 21
+    deliverables:
+      - {id: end_stage_report, name: End stage report, weight: 40, mandatory: true, evidence: document, accept_roles: [project_manager]}
+      - {id: next_stage_plan, name: Next stage plan, weight: 30, mandatory: true, evidence: document, accept_roles: [project_manager], tags: [schedule]}
+      - {id: updated_business_case, name: Updated business case, weight: 30, mandatory: true, evidence: document, accept_roles: [sponsor, portfolio_lead], tags: [cost]}
+  - id: closure
+    name: Closure | Close the project
+    order: 3
+    purpose: hand over and close
+    threshold: 0.90
+    decisions: [pass, pass_with_actions, hold]
+    decided_by: [sponsor]
+    lead_time_days: 7
+    actions_due_days: 30
+    deliverables:
+      - {id: end_project_report, name: End project report, weight: 40, mandatory: true, evidence: document, accept_roles: [project_manager]}
+      - {id: acceptance_record, name: Acceptance record, weight: 40, mandatory: true, evidence: document, accept_roles: [sponsor]}
+      - {id: lessons_captured, name: Lessons learned captured, weight: 20, mandatory: false, evidence: link, accept_roles: [project_manager]}

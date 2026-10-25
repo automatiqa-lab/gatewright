@@ -1,0 +1,8 @@
+# Tender package templates per discipline: sections a package must contain.
+racking: [scope, loads and design basis, seismic, slab interface and flatness, inspection and testing, warranty, spares, training]
+asrs: [scope, throughput and performance, controls and WCS interface, FAT and SAT, availability guarantee, warranty, spares, training]
+systems: [scope, interfaces and I/O list, data migration, testing and cut-over, service levels, licences]
+fire: [scope, design standard, insurer approval, hydraulic calculation, commissioning, maintenance]
+civil: [scope, geotech basis, structural design, programme, HSE plan, warranty]
+refrigeration: [scope, design temperatures, refrigerant and safety, energy performance, commissioning, maintenance]
+default: [scope, technical requirements, testing, warranty]

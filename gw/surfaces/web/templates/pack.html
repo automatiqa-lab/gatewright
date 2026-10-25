@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block body %}
+{% if pack %}
+<div class="card"><h4>Review pack {{ ai_chip(pack) }} <span class="stamp {{ 'green' if pack.status == 'issued' else 'amber' }}">{{ pack.status }}</span></h4>
+  <pre style="white-space:pre-wrap">{{ pack.markdown }}</pre>
+  {% if pack.status != "issued" and pack.approval_id %}
+  <form method="post" action="/approvals/{{ pack.approval_id }}" class="inline">
+    <button class="btn confirm-btn" name="decision" value="approved" type="submit">Issue</button>
+    <button class="btn sec" name="decision" value="rejected" type="submit">Reject draft</button>
+  </form>{% endif %}
+</div>
+{% else %}<p class="empty">No pack drafted. The Gatekeeper drafts one inside the gate's lead time.</p>{% endif %}
+<p><a href="/projects/{{ code }}/gates/{{ gate }}">Back to the gate</a></p>
+{% endblock %}

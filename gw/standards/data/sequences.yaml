@@ -1,0 +1,8 @@
+# Sequence rules for the scout agent: a predecessor discipline must finish
+# (and be tested) before the successor starts on the same project.
+rules:
+  - {before: slab, after: racking, reason: "VNA racking needs an accepted slab flatness test (DIN 15185 / TR34 DM)", lesson: L-017, saved_days: 11}
+  - {before: civil, after: racking, reason: "racking installation needs the building weathertight", saved_days: 7}
+  - {before: civil, after: systems, reason: "WMS/WCS hardware needs the building ready", saved_days: 5}
+  - {before: fire, after: pv, reason: "roof PV layout must be fixed before the ESFR design is approved", lesson: L-041, saved_days: 15}
+  - {before: slab, after: asrs, reason: "ASRS rails need an accepted slab", saved_days: 10}

@@ -1,0 +1,16 @@
+# Solo deployment. First run:
+#   docker compose run --rm gatewright gw demo --db /data/gw.duckdb --data-dir /data/demo-data
+#   docker compose run --rm gatewright gw user password aleks
+#   docker compose up -d
+services:
+  gatewright:
+    build: .
+    ports: ["127.0.0.1:8000:8000"]
+    volumes: ["gatewright-data:/data"]
+    restart: unless-stopped
+    environment:
+      # behind your TLS proxy: its address as seen from the container (e.g. the bridge gateway), and https
+      GW_FORWARDED_ALLOW_IPS: ""
+      GW_PUBLIC_HTTPS: "0"
+volumes:
+  gatewright-data: {}

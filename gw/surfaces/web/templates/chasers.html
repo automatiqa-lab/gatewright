@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block topright %}
+<span class="tag green">{{ st.summary.get("confirmed", 0) }} confirmed</span>
+<span class="tag amber">{{ st.summary.get("flagged", 0) }} flagged</span>
+<span class="tag red">{{ st.summary.get("silent", 0) }} silent</span>
+<span class="tag">response {{ ((replied7 / sent7) if sent7 else none)|pct }}</span>
+<form method="post" action="/chasers/run" class="inline"><button class="btn" type="submit">Run chaser</button></form>
+{% endblock %}
+{% block body %}
+<div class="row">
+  <div class="col">
+    <div class="tbl-wrap"><table>
+      <tr><th>Commitment</th><th>Party</th><th>Due</th><th>Sent</th><th>Reply</th><th>Next step</th></tr>
+      {% for r in st.commitments[:60] %}
+      <tr{% if r.tag == "silent" %} class="hatch"{% elif r.tag == "flagged" %} class="hatch amber"{% endif %}>
+        <td><span class="m">{{ r.commitment }}</span> | {{ r.title }}</td>
+        <td class="m">{{ r.party }}</td>
+        <td class="m">{{ r.due|ddmmm }}</td>
+        <td class="m">{% for s in r.steps[-4:] %}L{{ s.level }}{% if s.status != "sent" %} {{ s.status }}{% endif %} {{ s.at|ddmmm }}{{ " | " if not loop.last }}{% endfor %}</td>
+        <td>{% if r.tag == "silent" %}<span class="tag red">silent {{ r.silence_days }} d</span>{% elif r.tag == "flagged" %}<span class="tag amber">flagged</span>{% elif r.tag == "confirmed" %}<span class="tag green">confirmed</span>{% else %}<span class="tag">awaiting</span>{% endif %}</td>
+        <td class="m">{% if r.last.status == "drafted" %}L{{ r.last.level }} drafted | needs approval{% elif r.last.status == "war_room" %}L4 | war-room decision{% elif r.last.status == "queued" %}L{{ r.last.level }} queued for the send window{% elif r.escalation_level >= 2 %}next: L{{ r.escalation_level + 1 }}{% else %}cadence{% endif %}</td>
+      </tr>
+      {% else %}<tr><td colspan="6" class="empty">Nothing chased yet.</td></tr>{% endfor %}
+    </table></div>
+    <div class="card"><h4>Escalation ladder <span class="tag">from Policies</span></h4>
+      <div class="legend" style="border:none;padding:0">
+        {% for l in ladder %}<span><b>L{{ l.level }}</b> {{ l.at|replace("_", " ") }}{% if l.to %} → {{ l.to|join(", ")|replace("_", " ") }}{% endif %}{% if l.cc %}, cc {{ l.cc|join(", ")|replace("_", " ") }}{% endif %} | <i>{{ l.autonomy|replace("_", " ") }}</i></span>{% endfor %}
+      </div>
+      <p class="small muted">Cadence (days before due): {% for k, v in cadence.items() %}{{ k }} {{ v|join(", ") }}{{ " | " if not loop.last }}{% endfor %}. L3 when silent {{ silence_l3 }} business days. L3 to a sponsor or authority always needs an approval - a hard limit, not a setting.</p>
+    </div>
+    {% if war %}
+    <div class="card"><h4>L4 | raised in the war room <span class="stamp amber">For decision</span></h4>
+      <div class="list">{% for w in war[:8] %}<div class="item"><div class="stripe crit"></div><div><div class="t">{{ war_codes.get(w.commitment_id, w.commitment_id) }} overdue</div><div class="who">nothing sent | {{ w.planned_for|hhmm }}</div></div></div>{% endfor %}</div>
+    </div>{% endif %}
+  </div>
+  <div class="rail" style="flex-basis:380px">
+    {% if preview %}
+    <div class="card"><h4>Outbound | {{ preview.gw_ref }}</h4>
+      <div class="msg"><div class="h">to {{ preview.to|join(", ") }}{% if preview.cc %} | cc {{ preview.cc|join(", ") }}{% endif %} | {{ preview.status }} {{ (preview.sent_at or preview.planned_for)|hhmm }} UTC</div><div style="white-space:pre-wrap">{{ preview.text }}</div></div>
+    </div>{% endif %}
+    {% if approvals %}<div class="card"><h4>Drafted escalations | {{ approvals|length }} <span class="stamp amber">For decision</span></h4></div>{% endif %}
+    {% for a in approvals %}
+    {% set o = a.output.payload if a.output else {} %}
+    <details class="card draft"{% if loop.first %} open{% endif %}><summary>{{ ai_chip(o) }} <b>L{{ o.level }}</b> | {{ (o.to or [])|join(", ") }} <span class="small muted"> | {{ o.reason }}</span></summary>
+      <div class="msg"><div class="h">to {{ (o.to or [])|join(", ") }}{% if o.cc %} | cc {{ o.cc|join(", ") }}{% endif %} | not sent | {{ o.reason }}</div><div style="white-space:pre-wrap">{{ o.text }}</div></div>
+      <form method="post" action="/approvals/{{ a.id }}" class="form">
+        <details><summary>Edit before sending</summary><textarea class="code" style="min-height:160px" name="edited_output" aria-label="Edited message">{{ o.text }}</textarea></details>
+        <div class="inline">
+          <button class="btn confirm-btn" name="decision" value="approved" type="submit">Approve and send</button>
+          <button class="btn sec" name="decision" value="approved_edited" type="submit">Send edited</button>
+          <button class="btn sec" name="decision" value="hold" type="submit">Hold</button>
+          <button class="btn sec" name="decision" value="rejected" type="submit">Reject</button>
+        </div>
+      </form>
+    </details>
+    {% else %}<div class="card"><h4>Drafted escalations</h4><p class="small muted">None waiting.</p></div>{% endfor %}
+  </div>
+</div>
+{% endblock %}

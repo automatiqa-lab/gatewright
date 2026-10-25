@@ -1,0 +1,762 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automatiqa.io/gatewright/schemas/policies.schema.json",
+  "title": "Gatewright policies",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "chasing",
+    "escalation",
+    "agents",
+    "gates",
+    "signals",
+    "forecast",
+    "semantic",
+    "retention",
+    "readiness_score"
+  ],
+  "properties": {
+    "chasing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cadence",
+        "quiet_hours",
+        "send_window",
+        "max_per_party_per_day"
+      ],
+      "properties": {
+        "cadence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "internal",
+            "vendor",
+            "authority"
+          ],
+          "properties": {
+            "internal": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 6,
+              "items": {
+                "type": "integer",
+                "minimum": -30,
+                "maximum": 60
+              }
+            },
+            "vendor": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 6,
+              "items": {
+                "type": "integer",
+                "minimum": -30,
+                "maximum": 60
+              }
+            },
+            "authority": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 6,
+              "items": {
+                "type": "integer",
+                "minimum": -30,
+                "maximum": 60
+              }
+            }
+          }
+        },
+        "silent_vendor_uses_authority_cadence": {
+          "type": "boolean"
+        },
+        "quiet_hours": {
+          "type": "string",
+          "pattern": "^\\d{2}:\\d{2}-\\d{2}:\\d{2}$"
+        },
+        "send_window": {
+          "type": "string",
+          "pattern": "^\\d{2}:\\d{2}-\\d{2}:\\d{2}$"
+        },
+        "send_days": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "mon",
+              "tue",
+              "wed",
+              "thu",
+              "fri",
+              "sat",
+              "sun"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "max_per_party_per_day": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "one_per_commitment_per_day": {
+          "type": "boolean"
+        },
+        "reply_form": {
+          "enum": [
+            "structured_plus_free_text",
+            "structured_only"
+          ]
+        },
+        "channel_default": {
+          "enum": [
+            "mail",
+            "teams",
+            "slack",
+            "planner_comment"
+          ]
+        },
+        "slow_responder_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "escalation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ladder",
+        "silence_days_to_l3",
+        "l3_requires_approval"
+      ],
+      "properties": {
+        "ladder": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 6,
+          "items": {
+            "type": "object",
+            "required": [
+              "level",
+              "at",
+              "autonomy"
+            ],
+            "properties": {
+              "level": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "at": {
+                "type": "string"
+              },
+              "to": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "cc": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "autonomy": {
+                "enum": [
+                  "act",
+                  "draft",
+                  "war_room_item"
+                ]
+              }
+            }
+          }
+        },
+        "silence_days_to_l3": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30
+        },
+        "l3_requires_approval": {
+          "const": true,
+          "description": "hard limit for sponsor|authority; kept true"
+        },
+        "reset_on": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "confirmed",
+              "submitted",
+              "accepted"
+            ]
+          }
+        }
+      }
+    },
+    "agents": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "autonomy"
+      ],
+      "properties": {
+        "autonomy": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "chaser": {
+              "enum": [
+                "observe",
+                "propose",
+                "draft",
+                "act"
+              ]
+            },
+            "gatekeeper": {
+              "enum": [
+                "observe",
+                "propose",
+                "draft",
+                "act"
+              ]
+            },
+            "scout": {
+              "enum": [
+                "observe",
+                "propose",
+                "draft",
+                "act"
+              ]
+            },
+            "tender": {
+              "enum": [
+                "observe",
+                "propose",
+                "draft",
+                "act"
+              ]
+            },
+            "brief": {
+              "enum": [
+                "observe",
+                "propose",
+                "draft",
+                "act"
+              ]
+            },
+            "reporter": {
+              "enum": [
+                "observe",
+                "propose",
+                "draft",
+                "act"
+              ]
+            }
+          }
+        },
+        "promotion": {
+          "type": "object",
+          "properties": {
+            "requires_readiness_above": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "for_weeks": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "max_step": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3
+            }
+          }
+        },
+        "budgets": {
+          "type": "object",
+          "properties": {
+            "tokens": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "seconds": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "schedules": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "intervals": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "default_model"
+      ],
+      "properties": {
+        "default_model": {
+          "type": "string"
+        },
+        "model_by_archetype": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "readiness_threshold_override": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1
+          }
+        },
+        "review_pack_lead_days_override": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "submitted_counts_as": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "next_review_days": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "levers": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "template_when_open_days_over": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "template_tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "partial_party_kinds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "signals": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "due_window_days": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60
+        },
+        "thresholds": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "gate_horizon_days": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lookback_days": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reply_within_business_days": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "slow_reply_days": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "exposure": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dimension_set_default": {
+          "type": "string"
+        },
+        "weights": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        }
+      }
+    },
+    "forecast": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model",
+        "fallback",
+        "flag_above",
+        "retire_if_ece_above"
+      ],
+      "properties": {
+        "model": {
+          "enum": [
+            "mitra-v2",
+            "tabicl-v2",
+            "tabpfn",
+            "catboost"
+          ]
+        },
+        "fallback": {
+          "enum": [
+            "catboost"
+          ]
+        },
+        "flag_above": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "retire_if_ece_above": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "context_max_rows": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 32768
+        },
+        "include_synthetic_priors": {
+          "type": "boolean"
+        },
+        "calibrate_weekly": {
+          "type": "boolean"
+        },
+        "lead_time_class": {
+          "type": "object",
+          "additionalProperties": {
+            "enum": [
+              "short",
+              "medium",
+              "long"
+            ]
+          }
+        },
+        "deliverable_types": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "semantic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "auto_apply"
+      ],
+      "properties": {
+        "auto_apply": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 1
+        },
+        "retrain": {
+          "enum": [
+            "weekly",
+            "daily",
+            "manual"
+          ]
+        },
+        "external_llm_allowed": {
+          "type": "boolean"
+        },
+        "max_doc_bytes": {
+          "type": "integer",
+          "minimum": 10000,
+          "maximum": 5000000
+        }
+      }
+    },
+    "calendars": {
+      "type": "object",
+      "properties": {
+        "countries": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "extra_holidays": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        }
+      }
+    },
+    "channels": {
+      "type": "object",
+      "properties": {
+        "by_party_kind": {
+          "type": "object",
+          "additionalProperties": {
+            "enum": [
+              "mail",
+              "teams",
+              "slack",
+              "planner_comment"
+            ]
+          }
+        },
+        "teams_cards_for_approvals": {
+          "type": "boolean"
+        }
+      }
+    },
+    "retention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inbound_item_payload_days"
+      ],
+      "properties": {
+        "inbound_item_payload_days": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "agent_output_days": {
+          "type": "integer",
+          "minimum": 30
+        },
+        "events": {
+          "const": "forever"
+        }
+      }
+    },
+    "readiness_score": {
+      "type": "object",
+      "properties": {
+        "definition": {
+          "type": "string"
+        },
+        "window_days": {
+          "type": "integer",
+          "minimum": 7
+        },
+        "per_agent": {
+          "type": "boolean"
+        }
+      }
+    },
+    "models": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Language models. The engine names no provider or model: it uses the connection given here.",
+      "properties": {
+        "drafting": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "connection": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "a chat ModelProvider connection id; null keeps templates only"
+            },
+            "agents": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "chaser",
+                  "gatekeeper",
+                  "brief"
+                ]
+              },
+              "uniqueItems": true
+            },
+            "chaser_levels": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 3
+              }
+            },
+            "max_tokens": {
+              "type": "integer",
+              "minimum": 100,
+              "maximum": 8000
+            },
+            "effort": {
+              "enum": [
+                "low",
+                "medium",
+                "high"
+              ]
+            }
+          }
+        },
+        "assistant": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "connection": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "a chat ModelProvider connection id; null keeps templates only"
+            },
+            "max_steps": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            },
+            "max_tool_calls": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 60
+            },
+            "max_tokens": {
+              "type": "integer",
+              "minimum": 200,
+              "maximum": 16000
+            },
+            "per_user_per_hour": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            },
+            "effort": {
+              "enum": [
+                "low",
+                "medium",
+                "high"
+              ]
+            },
+            "max_seconds": {
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 1800
+            },
+            "tool_result_chars": {
+              "type": "integer",
+              "minimum": 500,
+              "maximum": 50000
+            }
+          }
+        }
+      }
+    },
+    "realtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Event-driven agent runs: record events trigger bounded, debounced reactions.",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "debounce_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3600
+        },
+        "max_runs_per_action_per_hour": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600
+        },
+        "reactions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "when",
+              "run"
+            ],
+            "properties": {
+              "run": {
+                "enum": [
+                  "gatekeeper",
+                  "process_inbound",
+                  "dispatch_outbox",
+                  "signals"
+                ]
+              },
+              "ignore_actors": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "when": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "entity"
+                ],
+                "properties": {
+                  "entity": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

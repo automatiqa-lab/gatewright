@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block topright %}
+<span class="tag {{ status_colour }}">{{ c.status }}</span>
+{% if c.escalation_level %}<span class="tag {{ 'red' if c.escalation_level >= 3 else 'amber' }}">L{{ c.escalation_level }}</span>{% endif %}
+{% if slip %}<span class="tag {{ 'red' if slip.p > 0.5 else ('amber' if slip.p > 0.3 else 'green') }}">slip {{ slip.p|pct }}</span>{% endif %}
+<a class="btn small sec" href="/chasers">Chasers</a>
+{% endblock %}
+{% block body %}
+<div class="row">
+  <div class="col">
+    <div class="card"><h4>{{ c.code }} | {{ c.title }}</h4>
+      <div class="tbl-wrap"><table>
+        <tr><th>Project</th><td>{% if project %}<a href="/projects/{{ project.code }}">{{ project.code }}</a> | {{ project.name }}{% endif %}</td></tr>
+        <tr><th>Gate</th><td>{% if gate %}<a href="{{ gate_url }}">{{ gate.name }}</a> | review {{ gate.planned_review_at|ddmmm }}{% else %}—{% endif %}</td></tr>
+        <tr><th>Party</th><td>{{ party.name if party else "—" }}{% if party %} <span class="small muted"> | {{ party.kind }} | {{ party.country }}</span>{% endif %}</td></tr>
+        <tr><th>Owner</th><td>{{ owner.name if owner else "—" }}</td></tr>
+        <tr><th>Kind</th><td class="m">{{ c.kind|replace("_", " ") }} | {{ c.deliverable_id }}{% if c.mandatory %} | <span class="tag">mandatory</span>{% endif %}</td></tr>
+        <tr><th>Due</th><td class="m">{{ c.due_at|ddmmm }}{% if c.due_at != c.original_due_at %} <span class="small muted">(originally {{ c.original_due_at|ddmmm }})</span>{% endif %}</td></tr>
+        <tr><th>Chased</th><td class="m">{{ c.chase_count }} times{% if c.last_chase_at %} | last {{ c.last_chase_at|ddmmm }}{% endif %}{% if c.last_reply_at %} | reply {{ c.last_reply_at|ddmmm }}{% endif %}</td></tr>
+        {% if slip %}<tr><th>Forecast</th><td class="m">p(slip) {{ slip.p|pct }}{% if slip.p50_days is not none %} | median delay {{ "%.0f"|format(slip.p50_days) }} d{% endif %} | {{ slip.model_id }} | <a href="/forecast">forecast</a></td></tr>{% endif %}
+        {% if c.tags %}<tr><th>Tags</th><td>{% for t in c.tags %}<span class="tag">{{ t }}</span> {% endfor %}</td></tr>{% endif %}
+      </table></div>
+    </div>
+    <div class="card"><h4>Chases | {{ chases|length }}</h4>
+      <div class="tbl-wrap"><table>
+        <tr><th>Planned</th><th>Level</th><th>Status</th><th>Sent</th><th>Reply</th><th>To</th></tr>
+        {% for ch in chases %}
+        <tr><td class="m">{{ ch.planned_for|hhmm }}</td><td class="m">L{{ ch.level }}</td><td class="m">{{ ch.status|replace("_", " ") }}</td>
+          <td class="m">{{ ch.sent_at|hhmm if ch.sent_at else "—" }}</td>
+          <td>{% if ch.replied_at %}<span class="tag green">{{ ch.reply_intent or "replied" }}</span> {{ ch.replied_at|ddmmm }}{% else %}—{% endif %}</td>
+          <td class="small">{{ ch.to|join(", ") }}</td></tr>
+        {% if ch.text %}<tr><td colspan="6"><details><summary class="small">Message {{ ch.gw_ref }}</summary><div class="msg"><div style="white-space:pre-wrap">{{ ch.text }}</div></div></details></td></tr>{% endif %}
+        {% else %}<tr><td colspan="6" class="empty">Not chased yet.</td></tr>{% endfor %}
+      </table></div>
+    </div>
+  </div>
+  <div class="rail" style="flex-basis:380px">
+    <div class="card"><h4>Evidence | {{ evidence|length }}</h4>
+      <div class="list">
+      {% for e in evidence %}<div class="item"><div class="stripe {{ 'ok' if e.accepted_at else 'warn' }}"></div><div><div class="t">{% if e.uri.startswith(("https://", "http://")) %}<a href="{{ e.uri }}" rel="noopener noreferrer" target="_blank">{{ e.title }}</a>{% else %}{{ e.title }} <span class="small muted mono">{{ e.uri }}</span>{% endif %}</div><div class="who">{{ e.kind|replace("_", " ") }}{% if e.revision %} | rev {{ e.revision }}{% endif %} | {{ e.received_at|ddmmm }}{% if e.accepted_at %} | accepted{% endif %}</div></div></div>
+      {% else %}<div class="item"><div class="stripe"></div><div><div class="t">No evidence yet.</div></div></div>{% endfor %}
+      </div>
+    </div>
+    <div class="card"><h4>Inbound | {{ inbound|length }}</h4>
+      <div class="list">
+      {% for i in inbound %}<div class="item"><div class="stripe info"></div><div><div class="t">{{ (i.payload.get("subject") or i.kind)[:70] }}</div><div class="who">{{ i.received_at|hhmm }}{% if i.classification %} | {{ i.classification.get("label", "") }}{% endif %}{% if i.review_state == "pending" %} | <a href="/inbox">in review</a>{% endif %}</div></div></div>
+      {% else %}<div class="item"><div class="stripe"></div><div><div class="t">Nothing received.</div></div></div>{% endfor %}
+      </div>
+    </div>
+    <div class="card"><h4>Audit trail</h4>
+      <div class="list">
+      {% for e in events %}<div class="item"><div class="stripe"></div><div><div class="t">{{ e.kind|replace("_", " ") }}{% if e.payload_json is mapping and e.payload_json.get("to") %} → {{ e.payload_json["to"] }}{% endif %}</div><div class="who">{{ e.at|hhmm }} | {{ e.actor }}</div></div></div>
+      {% else %}<div class="item"><div><div class="t">No events.</div></div></div>{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

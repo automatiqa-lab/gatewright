@@ -1,0 +1,109 @@
+# Gate model: RIBA Plan of Work 2020 stages 0-7, condensed deliverables. UK building projects.
+id: riba-2020
+name: RIBA Plan of Work 2020
+applies_to: [brownfield, extension, urban]
+dimensions: [schedule, cost, permits, design, vendors, site, systems, ops_readiness, safety, dependencies, forecast]
+gates:
+  - id: s0
+    name: Stage 0 | Strategic definition
+    order: 0
+    purpose: the right project
+    threshold: 0.70
+    decisions: [pass, pass_with_actions, hold, stop]
+    decided_by: [portfolio_lead]
+    lead_time_days: 7
+    actions_due_days: 30
+    deliverables:
+      - {id: business_case, name: Business case, weight: 50, mandatory: true, evidence: document, accept_roles: [portfolio_lead]}
+      - {id: strategic_brief, name: Strategic brief, weight: 50, mandatory: true, evidence: document, accept_roles: [portfolio_lead]}
+  - id: s1
+    name: Stage 1 | Preparation and briefing
+    order: 1
+    purpose: project brief and team
+    threshold: 0.80
+    decisions: [pass, pass_with_actions, hold, stop]
+    decided_by: [portfolio_lead]
+    lead_time_days: 7
+    actions_due_days: 30
+    deliverables:
+      - {id: project_brief, name: Project brief, weight: 40, mandatory: true, evidence: document, accept_roles: [project_manager], tags: [design]}
+      - {id: feasibility, name: Feasibility studies and site information, weight: 40, mandatory: true, evidence: document, accept_roles: [project_manager], tags: [site, permits]}
+      - {id: team_appointed, name: Project team and responsibility matrix, weight: 20, mandatory: false, evidence: document, accept_roles: [project_manager]}
+  - id: s2
+    name: Stage 2 | Concept design
+    order: 2
+    purpose: architectural concept
+    threshold: 0.80
+    decisions: [pass, pass_with_actions, hold, stop]
+    decided_by: [portfolio_lead, sponsor]
+    lead_time_days: 10
+    actions_due_days: 30
+    deliverables:
+      - {id: concept_design, name: Architectural and engineering concept, weight: 40, mandatory: true, evidence: document, accept_roles: [sme:engineering], tags: [design]}
+      - {id: cost_plan_2, name: Stage 2 cost plan, weight: 25, mandatory: true, evidence: document, accept_roles: [project_manager], check: "project.estimate_class <= 4"}
+      - {id: structural_check, name: Structural check of existing slab and frame, weight: 20, mandatory: true, evidence: document, accept_roles: [sme:engineering], party_role: consultant, tags: [design, safety]}
+      - {id: planning_preapp, name: Planning pre-application response, weight: 15, mandatory: false, evidence: document, accept_roles: [project_manager], party_role: authority, tags: [permits]}
+  - id: s3
+    name: Stage 3 | Spatial coordination
+    order: 3
+    purpose: coordinated design
+    threshold: 0.85
+    decisions: [pass, pass_with_actions, hold, stop]
+    decided_by: [investment_committee]
+    lead_time_days: 14
+    actions_due_days: 30
+    deliverables:
+      - {id: coordinated_design, name: Spatially coordinated design, weight: 35, mandatory: true, evidence: document, accept_roles: [sme:engineering], tags: [design]}
+      - {id: planning_application, name: Planning application submitted or consent, weight: 25, mandatory: true, evidence: permit_ref, accept_roles: [project_manager], party_role: authority, tags: [permits]}
+      - {id: cost_plan_3, name: Stage 3 cost plan, weight: 20, mandatory: true, evidence: document, accept_roles: [project_manager], check: "project.estimate_class <= 3"}
+      - {id: fire_strategy, name: Fire strategy, weight: 20, mandatory: true, evidence: document, accept_roles: [sme:hse], party_role: insurer, tags: [safety]}
+  - id: s4
+    name: Stage 4 | Technical design
+    order: 4
+    purpose: ready to build
+    threshold: 0.90
+    decisions: [pass, pass_with_actions, hold]
+    decided_by: [project_director]
+    lead_time_days: 10
+    actions_due_days: 21
+    deliverables:
+      - {id: technical_design, name: Technical design and specifications, weight: 40, mandatory: true, evidence: document, accept_roles: [sme:engineering], tags: [design]}
+      - {id: building_regs, name: Building regulations approval, weight: 30, mandatory: true, evidence: permit_ref, accept_roles: [project_manager], party_role: authority, tags: [permits]}
+      - {id: contractor_appointed, name: Contractor appointed, weight: 30, mandatory: true, evidence: document, accept_roles: [sme:procurement], tags: [vendors]}
+  - id: s5
+    name: Stage 5 | Manufacturing and construction
+    order: 5
+    purpose: build
+    threshold: 0.90
+    decisions: [pass, pass_with_actions, hold]
+    decided_by: [project_director]
+    lead_time_days: 10
+    actions_due_days: 21
+    deliverables:
+      - {id: progress_reports, name: Monthly progress and cost reports, weight: 40, mandatory: true, evidence: document, accept_roles: [project_manager], tags: [schedule, cost]}
+      - {id: commissioning, name: Commissioning records, weight: 40, mandatory: true, evidence: test_report, accept_roles: [sme:engineering], tags: [systems]}
+      - {id: defects, name: Defects list, weight: 20, mandatory: false, evidence: document, accept_roles: [project_manager], tags: [site]}
+  - id: s6
+    name: Stage 6 | Handover
+    order: 6
+    purpose: hand over and close
+    threshold: 0.90
+    decisions: [pass, pass_with_actions, hold]
+    decided_by: [site_lead]
+    lead_time_days: 7
+    actions_due_days: 21
+    deliverables:
+      - {id: handover_pack, name: Handover information and O&M manuals, weight: 50, mandatory: true, evidence: document, accept_roles: [site_lead], tags: [ops]}
+      - {id: practical_completion, name: Practical completion certificate, weight: 50, mandatory: true, evidence: document, accept_roles: [project_manager]}
+  - id: s7
+    name: Stage 7 | Use
+    order: 7
+    purpose: operate and learn
+    threshold: 0.80
+    decisions: [pass, pass_with_actions]
+    decided_by: [site_lead]
+    lead_time_days: 7
+    actions_due_days: 60
+    deliverables:
+      - {id: post_occupancy, name: Post-occupancy evaluation, weight: 60, mandatory: false, evidence: document, accept_roles: [site_lead], tags: [ops]}
+      - {id: lessons_captured, name: Lessons learned captured, weight: 40, mandatory: false, evidence: link, accept_roles: [project_manager]}

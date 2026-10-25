@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automatiqa.io/gatewright/schemas/gatemodel.schema.json",
+  "title": "Gatewright gate model",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "name",
+    "gates"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,40}$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 3
+    },
+    "rev": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "set by publish"
+    },
+    "applies_to": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "greenfield",
+          "brownfield",
+          "extension",
+          "site_systems",
+          "compliance",
+          "urban",
+          "other"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "dimensions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z_]+$"
+      },
+      "uniqueItems": true
+    },
+    "gates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/gate"
+      }
+    }
+  },
+  "$defs": {
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "order",
+        "threshold",
+        "decisions",
+        "decided_by",
+        "deliverables"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]{1,24}$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "purpose": {
+          "type": "string"
+        },
+        "threshold": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "decisions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "enum": [
+              "pass",
+              "pass_with_actions",
+              "hold",
+              "stop"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "decided_by": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "lead_time_days": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 10
+        },
+        "actions_due_days": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 30
+        },
+        "deliverables": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/deliverable"
+          }
+        }
+      }
+    },
+    "deliverable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "weight",
+        "evidence",
+        "accept_roles"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]{1,40}$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "weight": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "mandatory": {
+          "type": "boolean",
+          "default": false
+        },
+        "evidence": {
+          "enum": [
+            "document",
+            "permit_ref",
+            "test_report",
+            "link",
+            "statement"
+          ]
+        },
+        "accept_roles": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^(portfolio_lead|project_manager|project_director|site_lead|sponsor|investment_committee|admin|sme:[a-z_]+)$"
+          }
+        },
+        "party_role": {
+          "enum": [
+            "internal_team",
+            "vendor",
+            "contractor",
+            "consultant",
+            "authority",
+            "insurer",
+            "utility",
+            "sponsor",
+            "other"
+          ]
+        },
+        "standard": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "check": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "safe expression \u00a74"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z_]+$"
+          },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

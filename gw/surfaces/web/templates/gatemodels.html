@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block topright %}
+<span class="seg" role="group" aria-label="Gate model">
+  {% for x in models %}<a href="/standards/gatemodels?model={{ x.id }}"{% if model and x.id == model.id %} class="on" aria-current="true"{% endif %}>{{ x.id }}</a>{% endfor %}
+</span>
+{% endblock %}
+{% block body %}
+{% if model %}
+<div class="row">
+  <div class="col">
+    <div class="card"><h4>{{ model.name }} | rev {{ model.rev }} <span class="tag">used by {{ model.used_by }} project{{ "" if model.used_by == 1 else "s" }}</span></h4>
+      <div class="tbl-wrap"><table>
+        <tr><th>#</th><th>Gate</th><th>Purpose</th><th>Deliverables (weight)</th><th>Pass</th><th>Decision by</th></tr>
+        {% for g in model.model.gates|sort(attribute="order") %}
+        <tr><td class="m">{{ g.order }}</td><td>{{ g.name }}</td><td>{{ g.purpose }}</td>
+          <td class="small">{% for d in g.deliverables %}{{ d.name|lower }} {{ d.weight|int }}{% if d.mandatory %}*{% endif %}{% if d.check %} [{{ d.check }}]{% endif %}{{ " | " if not loop.last }}{% endfor %}</td>
+          <td class="m">{{ g.threshold|pct }}</td><td class="m">{{ g.decided_by|join(", ")|replace("_", " ") }}</td></tr>
+        {% endfor %}
+      </table></div>
+      <p class="small muted">* mandatory: cannot be waived and must be accepted for a pass. Decision options per gate: pass | pass with actions (actions become commitments) | hold | stop. Dimensions: {{ model.model.dimensions|join(", ")|replace("_", " ") }}.</p>
+    </div>
+    <div class="card"><h4>Installed models</h4>
+      <div class="tbl-wrap"><table><tr><th>Model</th><th>Name</th><th>Rev</th><th>Gates</th><th>Used by</th><th>Published</th></tr>
+      {% for x in models %}<tr><td class="m"><a href="/standards/gatemodels?model={{ x.id }}">{{ x.id }}</a></td><td>{{ x.name }}</td><td class="m">{{ x.rev }}</td><td class="m">{{ x.gates }}</td><td class="m">{{ x.used_by }}</td><td class="m">{{ x.published_at|ddmmm }} | {{ x.published_by }}</td></tr>{% endfor %}
+      </table></div>
+      <p class="small muted">A model change creates a new revision; running gate instances keep the threshold and deliverables they started with.</p>
+    </div>
+  </div>
+  <div class="rail" style="flex-basis:420px">
+    <div class="card"><h4>gatemodels/{{ model.id }}.yaml</h4>
+      <form method="post" action="/standards/gatemodels/publish" class="form">
+        <label for="yaml" class="small muted">Edit, validate, publish as rev {{ model.rev + 1 }}</label>
+        <textarea id="yaml" class="code" name="yaml_text" spellcheck="false">{{ model.yaml }}</textarea>
+        <div class="inline">
+          <button class="btn sec" type="button" hx-post="/standards/gatemodels/validate" hx-include="#yaml" hx-target="#validation">Validate</button>
+          <button class="btn confirm-btn" type="submit">Publish rev</button>
+        </div>
+        <div id="validation" aria-live="polite"></div>
+      </form>
+    </div>
+  </div>
+</div>
+{% else %}<p class="empty">No gate models installed. Run <span class="mono">gw init</span>.</p>{% endif %}
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block topright %}<span class="tag">Brief agent | {{ (b.citations|length) if b else 0 }} sources cited</span>{% endblock %}
+{% block body %}
+{% if b %}
+{% if b.summary %}<p class="lead">{{ b.summary }} {{ ai_chip(b) }}</p>{% endif %}
+<div class="three">
+  {% for it in b["items"] %}
+  <div class="focus"><div class="k">{{ loop.index }}</div><b>{% if it.url %}<a href="{{ it.url }}">{{ it.title }}</a>{% else %}{{ it.title }}{% endif %}</b><p>{{ it.why }}</p><p class="small muted">Depends on it: {{ it.depends }}</p>
+    <span class="stamp {{ stamp_colour.get(it.stamp, 'blue') }}">{{ it.stamp }}</span>
+    {% if it.approval_id %}<a class="btn small sec" href="/chasers">Review the draft</a>{% elif it.kind == "decision" %}<a class="btn small sec" href="/projects/{{ it.project }}">Open the gate</a>{% elif it.kind == "proposal" %}<a class="btn small sec" href="/deps">Open proposals</a>{% endif %}
+  </div>
+  {% else %}<p class="empty">Nothing needs you today.</p>{% endfor %}
+</div>
+<div class="row">
+  <div class="col">
+    <div class="card"><h4>Changed since yesterday's issue</h4>
+      <div class="list">
+        {% for c in b.changed[:20] %}<div class="item"><div class="stripe info"></div><div><div class="t"><span class="rev" data-r="{{ c.rev }}"></span>{% if c.url %}<a href="{{ c.url }}">{{ c.what }}</a>{% else %}{{ c.what }}{% endif %}</div><div class="who">{{ c.at|hhmm }}</div></div></div>
+        {% else %}<div class="item"><div class="stripe"></div><div><div class="t">No changes.</div></div></div>{% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="rail">
+    <div class="card"><h4>Agents overnight</h4><p class="small">{% for a, v in b.overnight.items() if v.summary %}<b>{{ a|capitalize }}</b>: {{ v.summary }}{% if v.failed %} | {{ v.failed }} failed{% endif %}.<br>{% endfor %}</p>
+      <div class="inline"><a class="btn small" href="/chasers">Review escalations</a><a class="btn small sec" href="/">Open war room</a></div></div>
+    <div class="card"><h4>Not done by agents</h4><p class="small muted">{{ b.not_done.statement }} Checked against the audit log.</p></div>
+  </div>
+</div>
+{% else %}<p class="empty">No brief yet today.</p>{% endif %}
+{% endblock %}

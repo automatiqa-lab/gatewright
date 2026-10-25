@@ -1,0 +1,54 @@
+# Gate model: M&A integration, 100-day plan. Shows that gates are not limited to capital projects.
+# Typically run from a PlanSource (Planner / Jira) without a schedule network: no float signals, full chaser and readiness.
+id: integration-100-day
+name: Integration 100-day plan, 3 gates
+applies_to: [other]
+dimensions: [schedule, cost, people, systems, customers, compliance, dependencies, forecast]
+gates:
+  - id: day1
+    name: Gate 1 | Day 1 readiness
+    order: 1
+    purpose: can we operate on day one
+    threshold: 0.90
+    decisions: [pass, pass_with_actions, hold]
+    decided_by: [portfolio_lead, sponsor]
+    lead_time_days: 7
+    actions_due_days: 14
+    deliverables:
+      - {id: legal_close_checklist, name: Legal close checklist complete, weight: 20, mandatory: true, evidence: document, accept_roles: [sme:legal]}
+      - {id: payroll_banking, name: Payroll and banking continuity confirmed, weight: 15, mandatory: true, evidence: statement, accept_roles: [sme:finance], tags: [people]}
+      - {id: it_access_day1, name: "Day-1 IT access, e-mail and ERP read access", weight: 15, mandatory: true, evidence: test_report, accept_roles: [sme:it], party_role: vendor, tags: [systems]}
+      - {id: customer_comms, name: Customer and supplier communications issued, weight: 15, mandatory: true, evidence: document, accept_roles: [project_manager], tags: [customers]}
+      - {id: org_announcement, name: Organisation and reporting lines announced, weight: 15, mandatory: true, evidence: document, accept_roles: [sme:hr], tags: [people]}
+      - {id: contracts_assigned, name: Key contracts assigned or novated, weight: 10, mandatory: false, evidence: document, accept_roles: [sme:legal], tags: [compliance]}
+      - {id: risk_register_d1, name: Day-1 risk register and war-room roster, weight: 10, mandatory: false, evidence: document, accept_roles: [project_manager]}
+  - id: day30
+    name: Gate 2 | Day 30 stabilisation
+    order: 2
+    purpose: nothing broke, baseline known
+    threshold: 0.85
+    decisions: [pass, pass_with_actions, hold]
+    decided_by: [portfolio_lead]
+    lead_time_days: 5
+    actions_due_days: 21
+    deliverables:
+      - {id: baseline_pl, name: Opening balance and baseline P&L agreed, weight: 25, mandatory: true, evidence: document, accept_roles: [sme:finance], tags: [cost]}
+      - {id: master_data_mapping, name: Master data and chart-of-accounts mapping, weight: 20, mandatory: true, evidence: document, accept_roles: [sme:it, sme:finance], tags: [systems]}
+      - {id: retention_plan, name: Key-people retention plan signed, weight: 20, mandatory: true, evidence: document, accept_roles: [sme:hr], tags: [people]}
+      - {id: customer_churn_check, name: Top-20 customer check-ins done, weight: 15, mandatory: false, evidence: statement, accept_roles: [project_manager], tags: [customers]}
+      - {id: synergy_plan, name: Synergy plan with owners and dates, weight: 20, mandatory: true, evidence: document, accept_roles: [portfolio_lead], tags: [cost]}
+  - id: day100
+    name: Gate 3 | Day 100 synergy capture
+    order: 3
+    purpose: integration delivered, run-rate visible
+    threshold: 0.85
+    decisions: [pass, pass_with_actions, hold]
+    decided_by: [investment_committee]
+    lead_time_days: 10
+    actions_due_days: 30
+    deliverables:
+      - {id: erp_cutover, name: ERP cut-over or interface live, weight: 25, mandatory: true, evidence: test_report, accept_roles: [sme:it], party_role: vendor, tags: [systems]}
+      - {id: synergy_runrate, name: Synergy run-rate evidenced against plan, weight: 25, mandatory: true, evidence: document, accept_roles: [sme:finance], tags: [cost]}
+      - {id: org_design_final, name: Target organisation in place, weight: 20, mandatory: true, evidence: document, accept_roles: [sme:hr], tags: [people]}
+      - {id: compliance_transfer, name: "Licences, permits and certifications transferred", weight: 15, mandatory: true, evidence: permit_ref, accept_roles: [sme:legal], party_role: authority, tags: [compliance]}
+      - {id: lessons_captured, name: Lessons learned captured, weight: 15, mandatory: false, evidence: link, accept_roles: [project_manager]}

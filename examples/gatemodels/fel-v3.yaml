@@ -1,0 +1,93 @@
+# Gate model: Front-End Loading, 5 gates. Reference template for capital projects.
+# Validated by schemas/gatemodel.schema.json. Weights per gate sum to 100.
+id: fel-v3
+name: Front-End Loading, 5 gates
+applies_to: [greenfield, brownfield, extension, site_systems, compliance]
+dimensions: [schedule, cost, permits, design, vendors, site, systems, ops_readiness, safety, dependencies, forecast]
+
+gates:
+  - id: fel1
+    name: FEL 1 | Business case
+    order: 1
+    purpose: is it worth studying
+    threshold: 0.70
+    decisions: [pass, pass_with_actions, hold, stop]
+    decided_by: [portfolio_lead]
+    lead_time_days: 7
+    actions_due_days: 30
+    deliverables:
+      - {id: opportunity_statement, name: Opportunity statement and strategic fit, weight: 30, mandatory: true, evidence: document, accept_roles: [portfolio_lead], tags: [design]}
+      - {id: estimate_class5, name: Class 5 estimate (-30/+50%), weight: 20, mandatory: true, evidence: document, accept_roles: [project_manager], check: "project.estimate_class <= 5"}
+      - {id: site_longlist, name: Site long-list with constraints, weight: 20, mandatory: false, evidence: document, accept_roles: [project_manager], tags: [permits]}
+      - {id: risk_screen, name: "Risk screen (HSE, permits, utilities)", weight: 15, mandatory: false, evidence: document, accept_roles: [sme:hse], tags: [safety, permits]}
+      - {id: sponsor_named, name: Sponsor named and funding route, weight: 15, mandatory: true, evidence: statement, accept_roles: [portfolio_lead]}
+
+  - id: fel2
+    name: FEL 2 | Concept select
+    order: 2
+    purpose: which option
+    threshold: 0.80
+    decisions: [pass, pass_with_actions, hold, stop]
+    decided_by: [portfolio_lead, sponsor]
+    lead_time_days: 10
+    actions_due_days: 30
+    deliverables:
+      - {id: option_study, name: Option study with selection criteria, weight: 25, mandatory: true, evidence: document, accept_roles: [project_manager, sme:engineering], tags: [design]}
+      - {id: estimate_class4, name: Class 4 estimate (-15/+30%), weight: 20, mandatory: true, evidence: document, accept_roles: [project_manager], check: "project.estimate_class <= 4"}
+      - {id: site_selection, name: Site selection and geotech desk study, weight: 20, mandatory: true, evidence: document, accept_roles: [project_manager], tags: [site, permits]}
+      - {id: permit_strategy, name: Permit strategy and authority pre-consultation, weight: 15, mandatory: false, evidence: document, accept_roles: [project_manager], party_role: authority, tags: [permits]}
+      - {id: operating_concept, name: "Operating concept (flows, MHE, systems, headcount)", weight: 20, mandatory: false, evidence: document, accept_roles: [sme:operations], tags: [systems, ops]}
+
+  - id: fel3
+    name: FEL 3 | Definition
+    order: 3
+    purpose: ready to commit
+    threshold: 0.85
+    decisions: [pass, pass_with_actions, hold, stop]
+    decided_by: [investment_committee]
+    lead_time_days: 14
+    actions_due_days: 30
+    deliverables:
+      - {id: geotech_foundation, name: Geotech report and foundation design, weight: 10, mandatory: true, evidence: document, accept_roles: [sme:engineering], party_role: consultant, tags: [design, site]}
+      - {id: building_permit, name: Building permit, weight: 10, mandatory: true, evidence: permit_ref, accept_roles: [project_manager], party_role: authority, tags: [permits]}
+      - {id: environmental_permit, name: Environmental permit, weight: 5, mandatory: true, evidence: permit_ref, accept_roles: [project_manager], party_role: authority, tags: [permits]}
+      - {id: fire_strategy, name: Fire strategy with insurer approval (ESFR), weight: 15, mandatory: true, evidence: document, accept_roles: [sme:hse, project_manager], party_role: insurer, tags: [safety, design]}
+      - {id: racking_mhe_spec, name: Racking and MHE specification, weight: 10, mandatory: true, evidence: document, accept_roles: [sme:engineering], party_role: vendor, tags: [design, vendors]}
+      - {id: slab_flatness_spec, name: Slab flatness specification (DIN 15185 / TR34 DM), weight: 5, mandatory: false, evidence: document, accept_roles: [sme:engineering], standard: "DIN 15185", tags: [design, site]}
+      - {id: wms_wcs_design, name: WMS / WCS integration design and I/O list, weight: 5, mandatory: false, evidence: document, accept_roles: [sme:systems], party_role: vendor, tags: [systems]}
+      - {id: grid_connection, name: Grid connection confirmation, weight: 5, mandatory: true, evidence: document, accept_roles: [project_manager], party_role: utility, tags: [permits, site]}
+      - {id: estimate_class2, name: Class 2 estimate (±10%), weight: 10, mandatory: true, evidence: document, accept_roles: [project_manager, portfolio_lead], check: "project.estimate_class <= 2"}
+      - {id: schedule_dcma, name: "Execution schedule, DCMA 14", weight: 10, mandatory: false, evidence: link, accept_roles: [project_manager], check: "dcma14.passed >= 12", tags: [schedule]}
+      - {id: contracting_strategy, name: Contracting and procurement strategy, weight: 5, mandatory: false, evidence: document, accept_roles: [sme:procurement], tags: [vendors]}
+      - {id: ops_readiness_plan, name: "Operational readiness plan (ramp-up, labour, training)", weight: 10, mandatory: false, evidence: document, accept_roles: [sme:operations], tags: [ops]}
+
+  - id: execute
+    name: Execute
+    order: 4
+    purpose: build to the definition
+    threshold: 0.90
+    decisions: [pass, pass_with_actions, hold]
+    decided_by: [project_director]
+    lead_time_days: 10
+    actions_due_days: 21
+    deliverables:
+      - {id: change_control_log, name: Change control log current, weight: 20, mandatory: true, evidence: link, accept_roles: [project_manager]}
+      - {id: monthly_cost_schedule, name: Monthly cost and schedule report, weight: 20, mandatory: true, evidence: document, accept_roles: [project_manager], tags: [schedule, cost]}
+      - {id: sat_reports, name: SAT reports for all systems, weight: 30, mandatory: true, evidence: test_report, accept_roles: [sme:engineering, sme:systems], party_role: vendor, tags: [systems, vendors]}
+      - {id: punch_list, name: Punch list closed or accepted, weight: 15, mandatory: false, evidence: document, accept_roles: [project_manager], tags: [site]}
+      - {id: occupancy_permit, name: Occupancy and fire certificate, weight: 15, mandatory: true, evidence: permit_ref, accept_roles: [project_manager], party_role: authority, tags: [permits, safety]}
+
+  - id: startup
+    name: Start-up
+    order: 5
+    purpose: operate as designed
+    threshold: 0.90
+    decisions: [pass, pass_with_actions, hold]
+    decided_by: [site_lead]
+    lead_time_days: 7
+    actions_due_days: 21
+    deliverables:
+      - {id: rampup_curve, name: Ramp-up curve agreed and tracked, weight: 30, mandatory: true, evidence: document, accept_roles: [sme:operations], tags: [ops]}
+      - {id: training_records, name: Training records complete, weight: 20, mandatory: true, evidence: document, accept_roles: [sme:operations], tags: [ops]}
+      - {id: handover_certificate, name: Handover certificate signed, weight: 30, mandatory: true, evidence: document, accept_roles: [site_lead, project_manager]}
+      - {id: lessons_captured, name: Lessons learned captured, weight: 20, mandatory: false, evidence: link, accept_roles: [project_manager]}

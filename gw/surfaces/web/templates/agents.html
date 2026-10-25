@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="row">
+  <div class="col">
+    <div class="tbl-wrap"><table>
+      <tr><th>Started</th><th>Agent</th><th>Trigger</th><th>Autonomy</th><th>Outcome</th><th>Summary</th><th>Cost</th><th>Run</th></tr>
+      {% for r in runs %}
+      <tr{% if r.outcome == "failed" %} class="hatch"{% endif %}>
+        <td class="m">{{ r.started_at|hhmm }}</td><td class="m">{{ r.agent }}</td><td class="m">{{ r.trigger }}</td><td class="m">{{ r.autonomy_level }}</td>
+        <td><span class="tag {{ 'red' if r.outcome == 'failed' else ('amber' if r.outcome in ('drafted', 'proposed') else 'green') }}">{{ r.outcome }}</span>{% if r.needs_approval %} <span class="tag amber">approval</span>{% endif %}</td>
+        <td class="small">{{ r.summary }}{% if r.error %}<div class="small">{{ r.error[:120] }}</div>{% endif %}</td>
+        <td class="m">{{ "%.1f"|format(r.cost_seconds) }} s | {{ r.cost_tokens }} tok</td><td class="m">{{ r.id[:14] }}…</td>
+      </tr>
+      {% else %}<tr><td colspan="8" class="empty">No agent runs yet.</td></tr>{% endfor %}
+    </table></div>
+  </div>
+  <div class="rail" style="flex-basis:380px">
+    <div class="card"><h4>Approvals pending | {{ approvals|length }}</h4>
+      <div class="list">
+      {% for a in approvals[:20] %}
+        <div class="item"><div class="stripe warn"></div><div><div class="t">{{ a.title or a.kind }}</div><div class="who">{{ a.kind|replace("_", " ") }} | {{ a.requested_at|hhmm }}</div>
+          <form method="post" action="/approvals/{{ a.id }}" class="inline" style="margin-top:4px">
+            <button class="btn small confirm-btn" name="decision" value="approved" type="submit">Approve</button>
+            <button class="btn small sec" name="decision" value="rejected" type="submit">Reject</button>
+          </form></div></div>
+      {% else %}<div class="item"><div class="stripe ok"></div><div><div class="t">Nothing waiting.</div></div></div>{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

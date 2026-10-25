@@ -1,0 +1,32 @@
+# Template for live M365 connections to a MASKED demo account (delegated, device-code sign-in).
+#
+# Copy to ./connections.local.yaml (gitignored; never committed, never exported) and fill in:
+#   tenant     - the Entra tenant id of the demo account
+#   client_id  - the app registration (public client, device code allowed)
+#   mailbox    - the masked demo mailbox address
+# None of these is a secret, but they identify the owner, so they stay out of the repo.
+# There is no client secret: sign in once with `uv run gw harness login mail-live`; the token
+# cache is encrypted per user under %LOCALAPPDATA%\gatewright, outside any repository.
+#
+# Then: uv run gw harness add connections.local.yaml
+#       uv run gw harness login mail-live
+#       uv run gw demo-remote          # seeds synthetic documents and replies, then syncs them back
+
+connections:
+  - id: mail-live
+    contract: MessageChannel
+    adapter: m365_mail_graph
+    name: Masked demo mailbox (live)
+    config: {auth: device_code, tenant: "<tenant-id>", client_id: "<client-id>", mailbox: "<demo@example>",
+             demo_party_header: true}
+    scopes: [read, seed_demo]          # no send_as: the demo never chases real parties
+    owner: pmo
+    sync_every_minutes: 15
+  - id: docs-live
+    contract: DocumentSource
+    adapter: onedrive_graph
+    name: Masked demo OneDrive folder (live)
+    config: {auth: device_code, tenant: "<tenant-id>", client_id: "<client-id>", root_path: "Gatewright demo"}
+    scopes: [read, link, seed_demo]
+    owner: pmo
+    sync_every_minutes: 15

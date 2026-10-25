@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block topright %}
+<span class="seg" role="group" aria-label="Heat map mode">
+  <a href="/heatmap?mode=exposure"{% if mode == "exposure" %} class="on" aria-current="true"{% endif %}>exposure</a>
+  <a href="/heatmap?mode=trend"{% if mode == "trend" %} class="on" aria-current="true"{% endif %}>trend vs last week</a>
+  <a href="/heatmap?mode=forecast"{% if mode == "forecast" %} class="on" aria-current="true"{% endif %}>forecast only</a>
+</span>
+<span class="tag">hover or focus a cell for the drivers</span>
+{% endblock %}
+{% block body %}
+<div class="card">
+  <h4>{% if mode == "trend" %}Exposure trend, change over 7 days{% else %}Exposure matrix{% endif %}
+    <span class="scale">low <i style="background:var(--h0)"></i><i style="background:var(--h1)"></i><i style="background:var(--h2)"></i><i style="background:var(--h3)"></i><i style="background:var(--h4)"></i><i style="background:var(--h5)"></i> high</span></h4>
+  {% if hm.rows %}
+  <div class="hm" style="grid-template-columns:200px repeat({{ hm.dimensions|length }},minmax(44px,1fr))">
+    <div></div>{% for d in hm.dimensions %}<div class="ch">{{ d|replace("_", " ") }}</div>{% endfor %}
+    {% for r in hm.rows %}
+    <div class="rh"><a href="/projects/{{ r.code }}">{{ r.code }}</a> {{ r.site }} <small>{{ r.gate }}</small></div>
+    {% for c in r.cells %}
+      {% if c.value is none %}<div class="c none" tabindex="0" data-tip="{{ r.code }} | {{ c.dim|replace('_', ' ') }} | no inputs (absent, not estimated)">–</div>
+      {% else %}<div class="c {{ c.value|heat }}" tabindex="0" data-tip="{{ r.code }} | {{ c.dim|replace('_', ' ') }} {{ c.value }}{% for d in c.drivers[:3] %} | {{ d.why }}{% endfor %}">{% if mode == "trend" and c.value > 0 %}+{% endif %}{{ c.value }}</div>{% endif %}
+    {% endfor %}
+    {% endfor %}
+  </div>
+  {% else %}<p class="empty">{% if mode == "trend" %}Trend needs two recomputes seven days apart; it appears after a week of signals.{% else %}No signals computed yet.{% endif %}</p>{% endif %}
+  <p class="small muted">Exposure = weighted blend of the dimension's signals (0-100), warn maps to 50 and crit to 85; weights live in Policies. Missing inputs are left out and the weights renormalise; a cell with no inputs shows –. Columns come from each project's gate model dimension set.</p>
+</div>
+<div class="card">
+  <h4>Commitment load, next 12 weeks <span class="scale">0 <i style="background:var(--h0)"></i><i style="background:var(--h1)"></i><i style="background:var(--h2)"></i><i style="background:var(--h3)"></i><i style="background:var(--h4)"></i><i style="background:var(--h5)"></i> 5+</span></h4>
+  {% if load.rows %}
+  <div class="hm" style="grid-template-columns:240px repeat({{ load.weeks|length }},minmax(36px,1fr))">
+    <div></div>{% for w in load.weeks %}<div class="ch">{{ w }}</div>{% endfor %}
+    {% for r in load.rows[:24] %}
+    <div class="rh">{{ r.party }} <small>{{ r.kind|replace("_", " ") }}</small>{% for t in r.tags %} <span class="tag {{ 'red' if t == 'silent' else 'amber' }}">{{ t }}</span>{% endfor %}</div>
+    {% for n in r.counts %}<div class="c h{{ [n, 5]|min }}" tabindex="0" data-tip="{{ r.party }} | {{ load.weeks[loop.index0] }} | {{ n }} due">{{ n }}</div>{% endfor %}
+    {% endfor %}
+  </div>
+  {% else %}<p class="empty">No open commitments in the next twelve weeks.</p>{% endif %}
+  <p class="small muted">Count of open commitments due per party per ISO week. Silent = no reply for 3 business days since the first unanswered chase; slow = median reply over 5 days.</p>
+</div>
+{% endblock %}

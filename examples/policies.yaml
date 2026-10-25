@@ -1,0 +1,176 @@
+# Gatewright policies - reference defaults. Validated by schemas/policies.schema.json.
+# Every save through the UI or gw.policy.set creates a new revision.
+# Three limits are NOT here because they are enforced in code:
+#   no schedule writes; no unapproved message to sponsor|authority; no external LLM without redaction.
+
+chasing:
+  slow_responder_rate: 0.4      # vendors this silent get the authority cadence
+  cadence:
+    internal: [5, 3, 0]
+    vendor: [10, 5, 2]
+    authority: [10, 5, 3]
+  silent_vendor_uses_authority_cadence: true
+  quiet_hours: "18:00-08:00"
+  send_window: "08:00-10:00"
+  send_days: [mon, tue, wed, thu, fri]
+  max_per_party_per_day: 3
+  one_per_commitment_per_day: true
+  reply_form: structured_plus_free_text
+  channel_default: mail
+
+escalation:
+  ladder:
+    - {level: 1, at: first_cadence_step, to: [owner], cc: [party_contact], autonomy: act}
+    - {level: 2, at: second_cadence_step, to: [owner, party_contact], cc: [project_manager], autonomy: act}
+    - {level: 3, at: third_cadence_step_or_silence, to: [party_contact], cc: [sponsor_or_country_lead], autonomy: draft}
+    - {level: 4, at: overdue_3_days, to: [], cc: [], autonomy: war_room_item}
+  silence_days_to_l3: 5
+  l3_requires_approval: true
+  reset_on: [confirmed, submitted, accepted]
+
+agents:
+  autonomy:
+    chaser: act
+    gatekeeper: draft
+    scout: propose
+    tender: draft
+    brief: act
+    reporter: act
+  promotion:
+    requires_readiness_above: 0.85
+    for_weeks: 4
+    max_step: 1
+  budgets:
+    tokens: {chaser: 20000, gatekeeper: 20000, scout: 5000, tender: 20000, brief: 15000, reporter: 30000, assistant: 60000}
+    seconds: 120
+  intervals:                     # minutes between runs
+    sync: 15
+    semantic: 15
+    chaser: 60
+  schedules:
+    signals: "06:00"
+    retention: "03:00"
+    gatekeeper: "06:05"
+    scout: "06:08"
+    forecast: "06:10"
+    brief: "06:30"
+    reporter: "mon 07:00"
+
+gates:
+  default_model: fel-v3
+  model_by_archetype:
+    urban: three-gate
+  readiness_threshold_override: {}
+  review_pack_lead_days_override: {}
+  submitted_counts_as: 0.5
+  next_review_days: 120          # the next gate's first review date after a pass
+  levers:                        # how the gatekeeper picks a recommendation for a gap
+    template_when_open_days_over: 3
+    template_tags: [ops]
+    partial_party_kinds: [vendor, contractor, consultant, utility, insurer]
+
+signals:
+  due_window_days: 5
+  gate_horizon_days: 30          # a gate under threshold within this many days is at risk
+  lookback_days: 30              # response rates, evidence rejections
+  reply_within_business_days: 2  # a reply this fast counts as answered
+  slow_reply_days: 5             # median reply time that tags a party as slow
+  thresholds:
+    float_erosion: [-5, -10]
+    schedule_staleness: [10, 20]
+    estimate_drift: [0.05, 0.10]
+    contingency_burn: [0.05, 0.15]
+    chase_response_rate: [0.7, 0.5]
+    dcma_pass: [12, 10]
+    review_queue_depth: [20, 50]
+    ops_readiness_gap: [0.5, 0.8]
+    unconfirmed_due_in_n: [1, 3]
+    silence_days: [3, 5]
+    forecast_slip: [0.35, 0.5]
+    # exposure inputs; warn maps to 50, crit to 85
+    authority_silence: [3, 5]
+    permit_unconfirmed: [1, 2]
+    design_gap: [0.3, 0.6]
+    evidence_rejections_30d: [1, 3]
+    vendor_response: [0.7, 0.5]
+    vendor_flag_rate: [0.2, 0.4]
+    vendor_forecast_slip: [0.35, 0.5]
+    site_float_erosion: [-5, -10]
+    systems_gap: [0.3, 0.6]
+    integrator_forecast_slip: [0.35, 0.5]
+    hse_status: [0.3, 0.6]
+    reviewer_silence: [3, 5]
+    deps_at_risk: [1, 3]
+    deps_unreviewed: [1, 3]
+    people_gap: [0.3, 0.6]
+    customers_gap: [0.3, 0.6]
+    compliance_gap: [0.3, 0.6]
+
+exposure:
+  dimension_set_default: dc-construction
+  weights: {}   # empty = defaults
+
+forecast:
+  lead_time_class: {asrs: long, refrigeration: long, weigh: medium, systems: medium, racking: medium, fire: medium, pv: medium}
+  deliverable_types: {permit: permit, occupancy: permit, zoning: permit, planning: permit, building_regs: permit, estimate: estimate, cost: estimate, sat: test, commissioning: test, fire: fire, schedule: schedule, grid: utility, design: design, spec: design, layout: design, ops: ops, ramp: ops, training: ops, geotech: design}   # id keyword -> type, first match wins
+  model: mitra-v2
+  fallback: catboost
+  flag_above: 0.35
+  retire_if_ece_above: 0.08
+  context_max_rows: 10000
+  include_synthetic_priors: true
+  calibrate_weekly: true
+
+semantic:
+  auto_apply: 0.80
+  retrain: weekly
+  external_llm_allowed: false
+  max_doc_bytes: 200000
+
+calendars:
+  countries: {NL: nl, FR: fr, PL: pl, ES: es, BE: be, PE: pe, BR: br, MX: mx, KE: ke, VN: vn}
+  extra_holidays: {}
+
+channels:
+  by_party_kind: {authority: mail, insurer: mail, vendor: mail, utility: mail, internal_team: teams}
+  teams_cards_for_approvals: true
+
+retention:
+  inbound_item_payload_days: 90
+  agent_output_days: 365
+  events: forever
+
+readiness_score:
+  definition: approved_unchanged_over_all_decided
+  window_days: 30
+  per_agent: true
+
+# Language models. Gatewright names no provider or model: point `connection` at any
+# chat connection (ollama, openai_compatible, anthropic_api, ...). null keeps every text template-only.
+# External providers always pass the redactor (hard limit 3).
+models:
+  drafting:
+    connection: null
+    agents: [chaser, gatekeeper, brief]
+    chaser_levels: [3]
+    max_tokens: 900
+    effort: low
+  assistant:
+    connection: null
+    max_steps: 8
+    max_tool_calls: 16
+    max_tokens: 2500
+    per_user_per_hour: 30
+    effort: medium
+
+# Real-time reactions: record events start bounded, debounced agent runs, so a reply,
+# an evidence decision or an approval is acted on in seconds rather than at the next schedule.
+realtime:
+  enabled: true
+  debounce_seconds: 20
+  max_runs_per_action_per_hour: 30
+  reactions:
+    - {when: {entity: InboundItem, kind: [created]}, run: process_inbound, ignore_actors: ["agent:semantic"]}
+    - {when: {entity: Commitment, kind: [status, replied]}, run: gatekeeper, ignore_actors: ["agent:gatekeeper"]}
+    - {when: {entity: Evidence, kind: [created, accepted, rejected]}, run: gatekeeper}
+    - {when: {entity: Approval, kind: [decided]}, run: dispatch_outbox}

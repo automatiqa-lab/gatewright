@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block topright %}
+<span class="tag green">{{ applied }} applied</span>
+<span class="tag amber">{{ queue|length }} in review</span>
+<span class="tag">classifier rev {{ cur.get("rev", "—") }} | F1 intent {{ cur.get("f1_intent")|num }} | doc {{ cur.get("f1_doc_type")|num }}</span>
+{% endblock %}
+{% block body %}
+<div class="row">
+  <div class="col">
+    <div class="tbl-wrap"><table>
+      <tr><th>Arrived</th><th>Source</th><th>Item</th><th>Intent / type</th><th>Extracted</th><th>Linked to</th><th>Conf.</th><th>Action</th></tr>
+      {% for i in items %}
+      {% set cl = i.classification or {} %}
+      {% set label = cl.get("label") or cl.get("intent") or cl.get("doc_type") %}
+      <tr>
+        <td class="m">{{ i.received_at|hhmm }}</td>
+        <td class="m">{{ "mail" if i.kind == "message" else "documents" }}</td>
+        <td>{{ (i.payload.get("subject") or i.payload.get("name") or "—")[:70] }}</td>
+        <td>{% if label %}<span class="tag {{ 'amber' if label == 'FLAG' else ('green' if label == 'CONFIRM' else ('blue' if i.kind == 'document' else '')) }}">{{ label|replace("_", " ") }}</span>{% else %}—{% endif %}</td>
+        <td class="small">{% set ents = cl.get("entities") or {} %}{% if ents.get("new_due_date") %}new date {{ ents.new_due_date|ddmmm }}{% endif %}{% if ents.get("reason") %} | "{{ ents.reason[:40] }}"{% endif %}{% if ents.get("person") %} | {{ ents.person }}{% endif %}{% if ents.get("revision") %}rev {{ ents.revision }}{% endif %}{% if not ents %}—{% endif %} {{ ai_chip(cl) }}</td>
+        <td class="m">{{ codes.get(i.commitment_id, "—") }}</td>
+        <td class="m">{{ cl.get("confidence")|num }}</td>
+        <td class="m{% if i.review_state == 'pending' %} hatch amber{% endif %}">{% if i.review_state == "pending" %}review{% elif i.review_state == "resolved" %}reviewed{% elif not i.processed_at %}waiting{% elif cl.get("source") in ("history", "case") %}history{% elif label in ("UNRELATED", "OOO", "invoice") %}dropped{% else %}applied{% endif %}</td>
+      </tr>
+      {% else %}<tr><td colspan="8" class="empty">No inbound items.</td></tr>{% endfor %}
+    </table></div>
+    <div class="card"><h4>How it classifies</h4><p class="small muted">The gw-ref token in headers, subject or footer links a reply exactly. Rules read the structured CONFIRM and FLAG lines, auto-replies and the file-name pattern project_deliverable_revX (capped at 0.95). Otherwise local character and word n-gram features feed one classifier per head; the candidate commitment comes from title similarity within the sender's open commitments. Confidence is the lower of head and link; {{ "%.2f"|format(0.8) }} applies automatically, below goes to review. Corrections are stored as labelled examples; a retrain is promoted only if F1 does not drop by more than 0.02.
+      {% if cur %}Current rev {{ cur.rev }}: {{ cur.n_intent }} reply and {{ cur.n_doc }} document examples, {{ cur.examples }} from corrections.{% endif %}
+      Auto-apply rate {{ metrics.auto_apply_rate|pct }} over {{ metrics.processed }} live items.</p></div>
+  </div>
+  <div class="rail" style="flex-basis:380px">
+    <div class="card"><h4>Taxonomy <span class="tag">rev {{ taxonomy.get("rev", 1) }}</span></h4><ul>
+      <li><b>Reply intents</b>: {{ taxonomy.reply_intents|join(" | ") }}</li>
+      <li><b>Document types</b>: {{ taxonomy.document_types|join(" | ")|replace("_", " ") }}</li>
+      <li><b>Entities</b>: {{ taxonomy.entities|join(" | ")|replace("_", " ") }}</li></ul>
+      <details><summary class="small">Edit taxonomy</summary>
+        <form method="post" action="/inbox/taxonomy" class="form">
+          <textarea class="inp" name="yaml_text" rows="14" style="width:100%;font-family:var(--mono)" aria-label="Taxonomy YAML">{{ taxonomy_yaml }}</textarea>
+          <input class="inp" name="note" placeholder="note for the revision" aria-label="Revision note">
+          <button class="btn" type="submit">Save rev</button>
+        </form>
+        <p class="small muted">Intents are upper case; CONFIRM, FLAG, OOO and UNRELATED and the document type "other" must stay. Labels the classifier predicts outside the taxonomy fall back to UNRELATED or other until the next retrain.
+        {% for h in taxonomy_history[-3:] %}<br><span class="mono">rev {{ h.rev }} | {{ h.at[:16]|replace("T", " ") }} | {{ h.note }}</span>{% endfor %}</p>
+      </details></div>
+    <div class="card"><h4>Review queue | {{ queue|length }} {% if queue %}<span class="stamp amber">For decision</span>{% endif %}</h4>
+      <div class="list">
+      {% for q in queue[:12] %}
+        <div class="item"><div class="stripe warn"></div><div style="min-width:0;flex:1">
+          <div class="t">{{ (q.summary or q.id)[:70] }}</div>
+          <div class="s">{{ q.text[:160] }}</div>
+          <form method="post" action="/inbox/{{ q.id }}/review" class="form" style="margin-top:6px">
+            <div class="inline">
+              <label class="small" for="lab-{{ q.id }}">is</label>
+              <select id="lab-{{ q.id }}" class="inp" name="label">
+                {% for l in (taxonomy.reply_intents if q.kind == "message" else taxonomy.document_types) %}<option value="{{ l }}"{% if l == q.label %} selected{% endif %}>{{ l|replace("_", " ") }}</option>{% endfor %}
+              </select>
+            </div>
+            <div class="inline">
+              {% for c in q.candidates %}<label class="small"><input type="radio" name="commitment" value="{{ c.code }}"{% if loop.first %} checked{% endif %}> {{ c.code }} {{ c.title[:30] }}</label>{% endfor %}
+              <label class="small"><input type="radio" name="commitment" value=""{% if not q.candidates %} checked{% endif %}> none</label>
+            </div>
+            <button class="btn small" type="submit">Record</button>
+          </form>
+        </div></div>
+      {% else %}<div class="item"><div class="stripe ok"></div><div><div class="t">Queue empty.</div></div></div>{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

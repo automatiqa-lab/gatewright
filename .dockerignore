@@ -1,0 +1,13 @@
+.venv
+.git
+**/__pycache__
+*.duckdb
+*.duckdb.wal
+demo-data
+gw-models
+connections.local.yaml
+**/connections.local.yaml
+**/.env
+.env
+gatewright-handover.zip
+mockups

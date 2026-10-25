@@ -1,0 +1,92 @@
+[project]
+name = "gatewright"
+version = "0.1.0"
+description = "Gatewright - AI PMO harness for capital project delivery"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12,<3.13"
+authors = [{ name = "Aleks Sidorecs" }]
+dependencies = [
+  "pydantic>=2.8",
+  "sqlalchemy>=2.0.30",
+  "duckdb>=1.1",
+  "duckdb-engine>=0.13",
+  "alembic>=1.13",
+  "fastapi>=0.115",
+  "uvicorn>=0.30",
+  "jinja2>=3.1",
+  "python-multipart>=0.0.9",
+  "typer>=0.12",
+  "pyyaml>=6.0",
+  "jsonschema>=4.23",
+  "simpleeval>=1.0",
+  "holidays>=0.58",
+  "mcp>=1.2",
+  "httpx>=0.27",
+  "numpy>=1.26",
+  "pandas>=2.2",
+  "scikit-learn>=1.5",
+  "catboost>=1.2",
+  "python-ulid>=2.7",
+  "argon2-cffi>=23.1",
+  "apscheduler>=3.10,<4",
+  "pyarrow>=24.0.0",
+  "openpyxl>=3.1.5",
+]
+
+[project.optional-dependencies]
+graph = ["msal>=1.30", "msal-extensions>=1.2"]
+embeddings = ["sentence-transformers>=3.0"]
+mitra = ["autogluon.tabular[mitra]>=1.4"]
+tabicl = ["tabicl>=2.2"]
+# NON-COMMERCIAL model weights: off by default; the connection must also set accept_noncommercial_licence
+tabpfn-noncommercial = ["tabpfn>=2.0"]
+oidc = ["pyjwt[crypto]>=2.9"]
+# optional LLM adapters; the engine itself depends on none of them
+anthropic = ["anthropic>=1.13,<2"]
+postgres = ["psycopg[binary]>=3.2"]
+
+[project.scripts]
+gw = "gw.surfaces.cli.app:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "types-PyYAML",
+    "types-jsonschema",
+    "playwright==1.63.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["gw"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"schemas" = "gw/_shipped/schemas"
+"examples/gatemodels" = "gw/_shipped/examples/gatemodels"
+"examples/policies.yaml" = "gw/_shipped/examples/policies.yaml"
+"examples/connections.yaml" = "gw/_shipped/examples/connections.yaml"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501", "B008"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+ignore_missing_imports = true
+exclude = ["tests/", "alembic/"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["slow: builds the full synthetic portfolio", "ui: needs a Playwright browser"]

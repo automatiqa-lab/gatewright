@@ -1,0 +1,15 @@
+Dear {{ contact }},
+
+Reference: {{ ref }} | {{ project }} | {{ title }}
+Due: {{ due }}{% if dependency %}
+Depends on it: {{ dependency }}{% endif %}
+
+Please confirm that {{ title_lower }} will be delivered by {{ due }}.
+
+Reply with one line:
+CONFIRM
+FLAG - <new date YYYY-MM-DD> <reason>
+{% if free_text %}A short note in your own words also works.
+{% endif %}
+Sent by Gatewright on behalf of {{ owner }}
+gw-ref {{ ref }}

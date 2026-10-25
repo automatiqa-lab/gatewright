@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block topright %}
+<a class="btn small {{ '' if period == 'weekly' else 'sec' }}" href="/reports?period=weekly">Weekly</a>
+<a class="btn small {{ '' if period == 'monthly' else 'sec' }}" href="/reports?period=monthly">Monthly</a>
+{% endblock %}
+{% block body %}
+<div class="row">
+  <div class="col">
+  {% if report %}
+    <div class="card"><h4>{{ period|title }} report | {{ report["from"] }} to {{ report["to"] }} <span class="tag">rendered {{ when|hhmm }}</span> {{ ai_chip(report) }}</h4>
+    <div class="tbl-wrap"><table>
+      <tr><th>Project</th><th>Name</th><th>Capex</th><th>Actual to date</th><th>Estimate</th><th>Contingency drawn</th><th>Finish vs baseline</th></tr>
+      {% for r in report["projects"] %}
+      {% set slip = r["finish_vs_baseline_days"] %}
+      <tr>
+        <td class="m"><a href="/projects/{{ r['project'] }}">{{ r["project"] }}</a></td><td>{{ r["name"] }}</td>
+        <td class="m">{{ r["currency"] }} {{ "%.1f"|format(r["capex"] / 1e6) }}m</td>
+        <td class="m">{{ "%.1f"|format(r["actual_to_date"] / 1e6) }}m</td>
+        <td class="m">{{ "%.1f"|format((r["estimate"] or 0) / 1e6) }}m</td>
+        <td class="m">{{ "%.0f"|format(r["contingency_drawn"] / 1e3) }}k</td>
+        <td>{% if slip is none %}—{% else %}<span class="tag {{ 'red' if slip > 30 else ('amber' if slip > 0 else 'green') }}">{{ "%+d"|format(slip) }} d</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </table></div>
+    </div>
+    <div class="card"><h4>Markdown for the SteerCo pack</h4><pre style="white-space:pre-wrap">{{ report["markdown"] }}</pre></div>
+  {% else %}
+    <div class="card"><div class="empty">No {{ period }} report yet. Render one with the button on the right, or wait for the schedule.</div></div>
+  {% endif %}
+  </div>
+  <div class="rail" style="flex-basis:340px">
+    {% if report %}
+    <div class="card"><h4>This period</h4>
+      <div class="list">
+        <div class="item"><div class="stripe ok"></div><div><div class="t">Chases sent {{ report["chases_sent"] }} | replied {{ report["chases_replied"] }}</div><div class="who">response rate {{ (report["response_rate"]|pct) if report["response_rate"] is not none else "—" }}</div></div></div>
+        <div class="item"><div class="stripe ok"></div><div><div class="t">Gates decided {{ report["gates_decided"]|length }}</div><div class="who">{% for g in report["gates_decided"] %}{{ g["gate"] }} {{ g["decision"] }}{% if not loop.last %}, {% endif %}{% endfor %}</div></div></div>
+      </div>
+    </div>
+    {% endif %}
+    <div class="card"><h4>Render</h4>
+      <form method="post" action="/reports/{{ period }}/run" class="inline"><button class="btn" type="submit">Render {{ period }} report now</button></form>
+      <p class="small">Power BI and other tools read the same payload as JSON from the API.</p>
+    </div>
+    <div class="card"><h4>History</h4>
+      <div class="list">
+      {% for h in history %}<div class="item"><div class="stripe"></div><div><div class="t">{{ h["from"] }} to {{ h["to"] }}</div><div class="who">{{ h["at"]|hhmm }} | {{ h["id"][:14] }}…</div></div></div>
+      {% else %}<div class="item"><div><div class="t">None yet.</div></div></div>{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
