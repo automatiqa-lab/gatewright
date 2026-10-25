@@ -10,6 +10,7 @@ from __future__ import annotations
 import secrets
 import threading
 from typing import Any
+from urllib.parse import quote
 
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -18,7 +19,7 @@ from markupsafe import escape
 from gw.errors import GwError
 from gw.record import models as m
 from gw.surfaces.principal import principal, service
-from gw.surfaces.web.routes import _problem, back, chrome, render
+from gw.surfaces.web.routes import _problem, back, chrome, local_path, render
 
 router = APIRouter(include_in_schema=False)
 QUIET = ("system:retrieval", "system:realtime", "system:signals", "system:auth")
@@ -68,7 +69,7 @@ def ask_submit(request: Request, question: str = Form(...), c: str = Form("")) -
             _JOBS[user.id] = state
 
     threading.Thread(target=work, name=f"gw-ask-{user.id}", daemon=True).start()
-    return RedirectResponse(f"/ask?c={conv}", status_code=303)
+    return RedirectResponse(local_path(f"/ask?c={quote(conv, safe='')}"), status_code=303)
 
 
 @router.get("/ask/pending", response_class=HTMLResponse)
@@ -98,9 +99,10 @@ def live(request: Request, since: int = 0) -> HTMLResponse:
                             '</span>')
     changes, runs = svc.store.count_events_after(since, QUIET)
     if not changes:
-        return HTMLResponse(f'<span id="live" hx-get="/live?since={since}" hx-trigger="every 20s" hx-swap="outerHTML">'
-                            '</span>')
+        return HTMLResponse(f'<span id="live" hx-get="/live?since={escape(str(int(since)))}" hx-trigger="every 20s" '
+                            'hx-swap="outerHTML"></span>')
     label = f"{changes} change{'s' if changes != 1 else ''}" + (f" | {runs} agent run{'s' if runs != 1 else ''}"
                                                                  if runs else "")
-    return HTMLResponse(f'<a id="live" class="tag amber" href="" hx-get="/live?since={since}" hx-trigger="every 20s" '
+    return HTMLResponse(f'<a id="live" class="tag amber" href="" hx-get="/live?since={escape(str(int(since)))}" '
+                        f'hx-trigger="every 20s" '
                         f'hx-swap="outerHTML" title="Reload to see them">{escape(label)} | reload</a>')

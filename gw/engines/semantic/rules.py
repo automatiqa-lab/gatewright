@@ -31,7 +31,7 @@ REASON = re.compile(r"(?:reason|motivo|raison|reden|because of|because|due to|va
 DELEGATE = re.compile(r"(?:contact|contacte a|contacter|contate|over to|handed .*? to|neem .*? contact op met)\s+"
                       r"([A-Z][a-zà-ÿ]+(?:\s+[A-Z][a-zà-ÿ]+)+)", re.S)
 DELEGATE2 = re.compile(r"^([A-Z][a-zà-ÿ]+\s+[A-Z][a-zà-ÿ]+) is responsible", re.M)
-AMOUNT = re.compile(r"(\d{1,3}(?:[.,]\d{3})+|\d+)\s?(EUR|USD|€|\$)", re.I)
+AMOUNT = re.compile(r"(?<![\d.,])(\d{1,3}(?:[.,]\d{3}){1,6}|\d{1,15})\s?(EUR|USD|€|\$)", re.I)
 
 
 @dataclass

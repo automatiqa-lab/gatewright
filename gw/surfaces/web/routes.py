@@ -187,7 +187,19 @@ def back(request: Request, fallback: str, err: str | None = None, msg: str | Non
     if msg:
         params["msg"] = msg
     q = "&".join(f"{k}={quote(str(v), safe='')}" if k in ("err", "msg") else f"{k}={v}" for k, v in params.items())
-    return RedirectResponse(path + (f"?{q}" if q else ""), status_code=303)
+    return RedirectResponse(local_path(path + (f"?{q}" if q else ""), fallback), status_code=303)
+
+
+def local_path(url: str, fallback: str = "/") -> str:
+    """A redirect target on this site, or the fallback.
+
+    Browsers read a backslash as a slash and drop tabs and line breaks, so "/" + backslash + "evil.example"
+    and "///evil.example" both leave the site; such targets fall back.
+    """
+    url = url.replace("\\", "").replace("\t", "").replace("\n", "").replace("\r", "")
+    if url.startswith("/") and not url.startswith("//") and not urlparse(url).netloc and not urlparse(url).scheme:
+        return url
+    return fallback
 
 
 def render(name: str, ctx: dict[str, Any]) -> HTMLResponse:
@@ -222,8 +234,12 @@ def act_as(request: Request, user: str = Form(...)) -> RedirectResponse:
     """Trust mode only: switch the acting user. Refused once any user has a password."""
     if auth.login_required(service(request).store):
         return back(request, "/", err="switching user is disabled in login mode; sign out and in instead")
+    try:
+        chosen = service(request).user(user)
+    except GwError as e:
+        return back(request, "/", err=_problem(e))
     resp = back(request, "/")
-    resp.set_cookie("gw_user", user, samesite="lax", httponly=True)
+    resp.set_cookie("gw_user", chosen.id, samesite="lax", httponly=True)
     return resp
 
 
@@ -345,7 +361,8 @@ def project(request: Request, code: str) -> Response:
         gi = svc.gate_instance(code)
     except GwError as e:
         return back(request, "/projects", err=_problem(e))
-    return RedirectResponse(f"/projects/{code}/gates/{gi.gate_id}", status_code=303)
+    return RedirectResponse(local_path(f"/projects/{quote(code, safe='')}/gates/{quote(gi.gate_id, safe='')}"),
+                            status_code=303)
 
 
 @router.get("/projects/{code}/gates/{gate}", response_class=HTMLResponse)
@@ -419,7 +436,8 @@ def gate_decide(request: Request, code: str, gate: str, decision: str = Form(...
         svc.gate_decide(user, code, gate, decision, note)
     except GwError as e:
         return back(request, f"/projects/{code}/gates/{gate}", err=_problem(e))
-    return RedirectResponse(f"/projects/{code}?msg={quote(f'{code}/{gate} stamped {decision}')}", status_code=303)
+    return RedirectResponse(local_path(f"/projects/{quote(code, safe='')}?msg={quote(f'{code}/{gate} stamped {decision}')}"),
+                            status_code=303)
 
 
 @router.post("/projects/{code}/gates/{gate}/gatekeeper")
@@ -616,7 +634,7 @@ def _latest_tender(svc: Any, code: str) -> tuple[dict[str, Any] | None, dict[str
 @router.get("/packages/{code}/tender")
 def package_tender(code: str) -> RedirectResponse:
     """GW-320 at the address gives it; the sheet itself lives at /tender?package=."""
-    return RedirectResponse(f"/tender?package={quote(code)}", status_code=307)
+    return RedirectResponse(local_path(f"/tender?package={quote(code, safe='')}"), status_code=307)
 
 
 @router.get("/tender", response_class=HTMLResponse)
@@ -1011,9 +1029,9 @@ def login_page(request: Request, next: str = "/", err: str = "") -> HTMLResponse
     from html import escape
 
     msg = f'<p class="msg err">{escape(err)}</p>' if err else ""
-    target = next if next.startswith("/") else "/"
+    target = local_path(next)
     idps = auth.oidc_connections(service(request).store)
-    sso = "".join(f'<p><a class="btn" href="/login/oidc/{escape(c.id)}?next={quote(target)}">Sign in with '
+    sso = "".join(f'<p><a class="btn" href="/login/oidc/{escape(c.id)}?next={escape(quote(target))}">Sign in with '
                   f'{escape(c.name)}</a></p>' for c in idps)
     return HTMLResponse(LOGIN_PAGE.format(err=msg + sso, next=escape(target)))
 
@@ -1022,18 +1040,19 @@ def login_page(request: Request, next: str = "/", err: str = "") -> HTMLResponse
 def login_submit(request: Request, email: str = Form(...), password: str = Form(...), next: str = Form("/")) -> Response:
     svc = service(request)
     user = svc.store.find_one(m.User, email=email.strip().lower()) or svc.store.find_one(m.User, short=email.strip())
-    target = next if next.startswith("/") and not next.startswith("//") else "/"
+    target = local_path(next)
     client = request.client.host if request.client else "?"
     if not auth.login_allowed(client, email):
-        return RedirectResponse(f"/login?err={quote('too many attempts; wait 15 minutes')}&next={quote(target)}",
-                                status_code=303)
+        return RedirectResponse(local_path(f"/login?err={quote('too many attempts; wait 15 minutes')}"
+                                           f"&next={quote(target, safe='')}"), status_code=303)
     ok = auth.verify_password(user, password) if user is not None else auth.verify_dummy(password)
     auth.login_attempt(client, email, ok)
     if user is None or not ok:
         svc.store.log("system:auth", "User", user.id if user else "unknown", "login_failed", {})
-        return RedirectResponse(f"/login?err={quote('wrong email or password')}&next={quote(target)}", status_code=303)
+        return RedirectResponse(local_path(f"/login?err={quote('wrong email or password')}&next={quote(target, safe='')}"),
+                                status_code=303)
     svc.store.log(f"user:{user.id}", "User", user.id, "login", {})
-    resp = RedirectResponse(target, status_code=303)
+    resp = RedirectResponse(local_path(target), status_code=303)
     secure = auth.secure_cookies(request)
     resp.set_cookie(auth.SESSION_COOKIE, auth.make_session(user.id, store=svc.store), samesite="lax", httponly=True,
                     max_age=auth.SESSION_HOURS * 3600, secure=secure)

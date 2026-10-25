@@ -19,9 +19,9 @@ from gw.record import models as m
 
 # --- redaction ---------------------------------------------------------------------
 
-EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
+EMAIL = re.compile(r"(?<![\w.+-])[\w.+-]{1,64}@[\w-]{1,63}(?:\.[\w-]{1,63}){1,8}")
 PHONE = re.compile(r"(?<!\w)(?:\+\d{1,3}[\s-]?)?(?:\(?\d{2,4}\)?[\s-]?){2,4}\d{2,4}(?!\w)")
-AMOUNT = re.compile(r"(?:(?:EUR|USD|GBP|€|\$)\s?\d[\d.,]*(?:\s?(?:k|m|million))?|\d[\d.,]*\s?(?:EUR|USD|GBP|€))", re.I)
+AMOUNT = re.compile(r"(?:(?:EUR|USD|GBP|€|\$)\s?\d[\d.,]{0,24}(?:\s?(?:k|m|million))?|(?<![\d.,])\d[\d.,]{0,24}\s?(?:EUR|USD|GBP|€))", re.I)
 ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?)?")
 SIGNOFF = re.compile(r"(?im)^(?:best regards|kind regards|regards|met vriendelijke groet|saludos|cordialement|atenciosamente)[,.]?\s*\n.*", re.S)
 
