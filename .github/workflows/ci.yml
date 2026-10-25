@@ -1,0 +1,59 @@
+# Lint, type check, smoke test, dependency audit and image build on every push and pull request.
+# Actions are pinned to commit SHAs; Dependabot keeps them current.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          enable-cache: true
+      - name: Python 3.12
+        run: uv python install 3.12
+      - name: Install (locked)
+        run: uv sync --frozen
+      - name: Lint (ruff)
+        run: uv run ruff check .
+      - name: Type check (mypy --strict)
+        run: uv run mypy gw
+      - name: Tests
+        run: |
+          if [ -d tests ]; then
+            uv run pytest -q -m "not ui"
+          else
+            echo "No tests/ directory yet - skipped; the smoke test below exercises the system."
+          fi
+      - name: Smoke test - synthetic portfolio and one gate
+        env:
+          GW_DB: ${{ runner.temp }}/gw.duckdb
+        run: |
+          uv run gw demo --seed 7
+          uv run gw score --gate DC-01/fel3
+      - name: Dependency audit (pip-audit)
+        run: |
+          uv export --frozen --no-dev --no-hashes --format requirements-txt -o "$RUNNER_TEMP/requirements.txt"
+          uvx pip-audit -r "$RUNNER_TEMP/requirements.txt" --progress-spinner off
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build the image (no push)
+        run: docker build --pull -t gatewright:ci .
