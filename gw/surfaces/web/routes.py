@@ -187,7 +187,8 @@ def back(request: Request, fallback: str, err: str | None = None, msg: str | Non
     if msg:
         params["msg"] = msg
     q = "&".join(f"{k}={quote(str(v), safe='')}" if k in ("err", "msg") else f"{k}={v}" for k, v in params.items())
-    return RedirectResponse(local_path(path + (f"?{q}" if q else ""), fallback), status_code=303)
+    # the fallback comes from the caller and may carry a path segment, so it is checked as well
+    return RedirectResponse(local_path(local_path(path + (f"?{q}" if q else ""), fallback)), status_code=303)
 
 
 def local_path(url: str, fallback: str = "/") -> str:
