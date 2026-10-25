@@ -822,7 +822,7 @@ class Gen:
         return out
 
     def write_planner_fixture(self) -> Path:
-        """A 212-task plan for the portfolio's planner project; 38 tasks map by label or bucket ( M1)."""
+        """A 212-task plan for the portfolio's planner project; 38 tasks map by label or bucket."""
         r = self.rng
         pcode = self.pf.PLANNER_PROJECT
         gi = self.current_gate[pcode]

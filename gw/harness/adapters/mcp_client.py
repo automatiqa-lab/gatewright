@@ -19,7 +19,7 @@ def call_tool(config: dict[str, Any], tool: str, args: dict[str, Any]) -> Any:
 
     command = config.get("command")
     if not command:
-        raise RuntimeError("MCP connection needs config.command (stdio); network transports arrive in M6")
+        raise RuntimeError("MCP connection needs config.command (stdio); this client speaks stdio only")
     from pathlib import Path
 
     cwd = Path(str(config.get("cwd") or config.get("folder") or Path.home())).resolve()

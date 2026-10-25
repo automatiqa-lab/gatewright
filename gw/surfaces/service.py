@@ -1,4 +1,6 @@
-"""The one service layer behind every surface.MCP tools, REST routes, the web sheets and the CLI are thin wrappers over these
+"""The one service layer behind every surface.
+
+MCP tools, REST routes, the web sheets and the CLI are thin wrappers over these
 methods. Authorisation is by role here, not in the surfaces.
 """
 

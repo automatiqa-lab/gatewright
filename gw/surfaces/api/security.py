@@ -43,7 +43,7 @@ def _local_request(scope: dict[str, Any]) -> bool:
 
 
 def _same_origin(scope: dict[str, Any]) -> bool:
-    """Browser state changes must come from this site (cross-site POSTs to localhost, M9)."""
+    """Browser state changes must come from this site (cross-site POSTs to localhost)."""
     if _header(scope, b"sec-fetch-site") == "cross-site":
         return False
     origin = _header(scope, b"origin")

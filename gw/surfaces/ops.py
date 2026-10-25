@@ -1,8 +1,7 @@
-"""Service operations for M3-M5: chaser and outbox, approvals, semantic engine, signals,
+"""Service operations: chaser and outbox, approvals, semantic engine, signals,
 heat maps, retrieval, scout, brief, reporter, forecast and the morning run.
 
 Mixed into `gw.surfaces.service.Service`; every surface calls these through it.
-for the tools listed in each docstring.
 """
 
 from __future__ import annotations
@@ -729,8 +728,10 @@ class Ops:
 
     def brief_text(self, user: m.User) -> str:
         from gw.agents.brief import render_text
+        from gw.governance.disclosure import with_readable_line
 
-        return render_text(self.brief(user))
+        b = self.brief(user)
+        return with_readable_line(render_text(b), b.get("ai_generated"))
 
     def report(self, period: str = "weekly", user: m.User | None = None) -> dict[str, Any]:
         """The latest weekly or monthly report. Reading never starts a run (POST /reports/{period}/run)."""

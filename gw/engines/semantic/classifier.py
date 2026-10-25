@@ -1,4 +1,4 @@
-"""Classifier heads for reply intent and document type.step 3 and
+"""Classifier heads for reply intent and document type.
 
 Default representation is local and offline: character and word n-gram hashing
 (multilingual by construction). When an embedding provider is configured

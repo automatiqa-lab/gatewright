@@ -1,4 +1,4 @@
-"""Autonomy promotion proposals.and
+"""Autonomy promotion proposals.
 
 Promotion is never automatic: when an agent's automation readiness has stayed above
 `agents.promotion.requires_readiness_above` for `for_weeks` consecutive weeks, a pending

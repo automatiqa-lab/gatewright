@@ -1,4 +1,4 @@
-"""Fakes for every contract.M1 (fakes satisfy the Protocols).
+"""Fakes for every contract (each satisfies its Protocol).
 
 Fakes hold data in memory and can be seeded from a JSON fixture (`config.fixture`)
 so a demo database survives a restart. `fail(n)` makes the next n health checks

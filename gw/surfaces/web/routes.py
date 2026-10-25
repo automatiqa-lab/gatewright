@@ -119,8 +119,15 @@ def ai_chip(obj: Any) -> Markup:
         scope, disclosure.item_chip())
 
 
+def ai_session_notice() -> str:
+    """The Art. 50(1) line on a sheet where a person works with an agent."""
+    from gw.governance import disclosure
+
+    return disclosure.session_notice()
+
+
 templates.env.filters.update(ddmmm=ddmmm, hhmm=hhmm, pct=pct, heat=heat, num=num)
-templates.env.globals.update(ai_chip=ai_chip)
+templates.env.globals.update(ai_chip=ai_chip, ai_session_notice=ai_session_notice)
 
 
 # --- chrome --------------------------------------------------------------------------------

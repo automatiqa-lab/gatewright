@@ -1,4 +1,6 @@
-"""Browser sign-in through an OIDC identity source (Entra, Google).GET /login/oidc/{conn}       -> redirect to the provider with state, nonce and a PKCE challenge
+"""Browser sign-in through an OIDC identity source (Entra, Google).
+
+GET /login/oidc/{conn}       -> redirect to the provider with state, nonce and a PKCE challenge
 GET /login/oidc/callback     -> verify state, exchange the code, verify the ID token, provision the
                                 user with roles from groups, set the session cookie.
 """

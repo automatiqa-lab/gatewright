@@ -255,14 +255,16 @@ GW_DB=gw.duckdb uv run alembic upgrade head   # apply database migrations after 
 ## EU AI Act
 
 Gatewright's agents can draft text with a language model - chases, gate notes, the brief, the
-assistant's answers - so that output carries transparency marking under Article 50.
+assistant's answers - so that output carries transparency marking under Article 50. Models are off
+by default; the synthetic demo runs on templates and produces nothing to mark.
 
 - Only content a model wrote is marked. Template text, content a person wrote or edited, and numbers
   from signals and forecasts are not; signals and forecasts carry their provenance in the event log.
 - Marking travels in two channels: a line people can read (a "drafted by AI" chip on the sheet, an
-  "AI-assisted" line on a message that leaves the system) and metadata a machine can detect - the
-  `ai_generated` envelope in REST and MCP results, an `X-AI-Generated` header, `ai-*` meta tags on
-  sheets and front matter on Markdown exports. The schema is `automatiqa-disclosure/1`.
+  "AI-assisted" line on a message, approval card or CLI output, and a session notice on the
+  assistant sheet) and metadata a machine can detect - the `ai_generated` envelope in REST and MCP
+  results, an `X-AI-Generated` header and `ai-*` meta tags on sheets. The schema is
+  `automatiqa-disclosure/1`.
 - The model is never named in visible output.
 
 If you deploy Gatewright for other people in the EU you are a deployer: keep the marking intact and

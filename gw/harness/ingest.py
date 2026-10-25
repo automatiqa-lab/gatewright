@@ -1,5 +1,4 @@
-"""Turn pulled items into record facts.step 1 and
-the mappings
+"""Turn pulled items into record facts.
 
 The harness does not interpret content: messages and documents land in
 `inbound_items` for the semantic engine; schedules, tasks and cost rows are

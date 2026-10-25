@@ -1,7 +1,6 @@
 """Prediction engine: context, scoring, calibration, explanations, what-if.
 
-Advisory only: the engine reads the record and
-writes nothing but forecast, feature and calibration rows through `ForecastWriter`
+Advisory only: the engine reads the record and writes nothing but forecast, feature and calibration rows through `ForecastWriter`
 (a runtime guard). It never changes a status and never sends anything.
 """
 
@@ -371,7 +370,7 @@ class Engine:
         self.writer.insert_many(rows)
 
     def backtest(self, holdout: float = 0.2, all_models: bool = True) -> dict[str, Any]:
-        """Time-based split over matured history: Brier, ECE (10 bins) and reliability per model ( M5).
+        """Time-based split over matured history: Brier, ECE (10 bins) and reliability per model.
 
         Every available model is calibrated on the same split and stored, so selection reads recorded
         calibration rather than one model's luck on one slice.

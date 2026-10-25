@@ -7,6 +7,8 @@
     <div class="card"><h4>The assistant is off</h4>
       <p class="small">It answers questions from the record with Gatewright's own tools and proposes next steps for a person to take. It needs a chat model connection, any provider: a local Ollama model, an OpenAI-compatible endpoint, or a hosted API. Add the connection on <a href="/harness">Harness</a> or in <span class="mono">connections.yaml</span>, then set <span class="mono">models.assistant.connection</span> on <a href="/policies">Policies</a>.{% if conn_id %} The configured connection <span class="mono">{{ conn_id }}</span> does not exist.{% endif %}</p>
     </div>
+    {% else %}
+    <p class="small muted" data-ai-notice="session">{{ ai_session_notice() }}</p>
     {% endif %}
     {% for t in turns %}
     {% set o = t.payload %}

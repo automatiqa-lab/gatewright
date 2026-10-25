@@ -43,7 +43,7 @@
       <p class="small muted">Threshold {{ score.threshold|pct }} copied from gate model {{ gi.gate_model_id }} rev {{ gi.gate_model_rev }} at creation. {{ score.gaps|length }} gaps; {{ score.gaps|selectattr("mandatory")|list|length }} mandatory. Submitted evidence counts half until a person accepts it.</p>
       {% if fg and fg.p_pass_on_date is not none %}<p class="small">P(pass on {{ gi.planned_review_at|ddmmm }}) <b>{{ fg.p_pass_on_date|num }}</b> <span class="stamp blue flat">Advisory</span></p>{% endif %}
     </div>
-    <div class="card"><h4>Gatekeeper says {% if assessment %}<span class="tag">{{ assessment.created_at|hhmm }}</span>{% endif %}</h4>
+    <div class="card"><h4>Gatekeeper says {% if assessment %}<span class="tag">{{ assessment.created_at|hhmm }}</span> {{ ai_chip(assessment.payload) }}{% endif %}</h4>
       {% if assessment %}
         <p class="small">{{ assessment.payload.says }}</p>
         <div class="list">

@@ -274,6 +274,8 @@ class Store:
             desc = order_by.startswith("-")
             ocol = table.c[order_by.lstrip("-")]
             q = q.order_by(ocol.desc() if desc else ocol)
+            if ocol.name != "id" and "id" in table.c:  # ties (same timestamp) fall back to insert order
+                q = q.order_by(table.c.id.desc() if desc else table.c.id)
         if limit:
             q = q.limit(limit)
         with self._read() as conn:

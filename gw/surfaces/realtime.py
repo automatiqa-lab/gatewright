@@ -1,4 +1,6 @@
-"""Real-time reactions: record events start bounded agent runs.A worker reads committed events from the event log by sequence number (so it sees every process's
+"""Real-time reactions: record events start bounded agent runs.
+
+A worker reads committed events from the event log by sequence number (so it sees every process's
 writes and never runs inside a committing transaction). Matching events (policies.realtime
 .reactions: entity, kinds, ignored actors) become reaction keys such as `gatekeeper:DC-01`; a key
 waits `debounce_seconds` so a burst of replies produces one run, and each action is capped per hour

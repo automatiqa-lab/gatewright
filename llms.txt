@@ -2,12 +2,12 @@
 
 > Gatewright is an open-source PMO harness for programmes that run on gates - capital projects, integrations, transformations, product programmes. It connects your schedule tool, planner, mailbox and document store, scores each gate against a configurable gate model, runs chasers and forecasts, and exposes everything as MCP tools.
 
-In design, about 40%: specification rev B, no code yet. Built in public by Aleks Sidorecs as part of Automatiqa Lab, MIT. Not related to OPA Gatekeeper (Kubernetes) or macOS Gatekeeper. Not a scheduling tool, not a document store, not an autonomous PMO: agents observe, propose, draft or act within policy, and three hard limits are fixed in code.
+Working release in Python: runs end to end on a bundled synthetic portfolio (`gw demo`) with example gate models, policies and connections; no account or real data needed. Language models are optional and provider-neutral (local Ollama, OpenAI-compatible or hosted). Built in public by Aleks Sidorecs as part of Automatiqa Lab, MIT. Not related to OPA Gatekeeper (Kubernetes) or macOS Gatekeeper. Not a scheduling tool, not a document store, not an autonomous PMO: agents observe, propose, draft or act within policy, and three hard limits are fixed in code.
 
 ## Docs
-- [README](https://github.com/automatiqa-lab/gatewright/blob/main/README.md): what it does, how it works keyed to the system schematic, what it is not, status
-- [System schematic](https://github.com/automatiqa-lab/gatewright/blob/main/docs/gatewright-how-it-works-aleks-sidorecs.png): connections, harness, record, engines, signals, six agents under an autonomy ladder, hard limits, people stamp
-- [COMPLIANCE.md](https://github.com/automatiqa-lab/gatewright/blob/main/COMPLIANCE.md): EU AI Act Article 50 classification and carve-outs
+- [README](https://github.com/automatiqa-lab/gatewright/blob/main/README.md): what it does, quick start with the synthetic demo, screens, connecting an agent over MCP, configuration, deployment
+- [System schematic](https://github.com/automatiqa-lab/gatewright/blob/main/docs/gatewright-how-it-works-aleks-sidorecs.png): connections, harness, record, engines, signals, agents under an autonomy ladder, hard limits, people stamp
+- [COMPLIANCE.md](https://github.com/automatiqa-lab/gatewright/blob/main/COMPLIANCE.md): EU AI Act Article 50 classification, marking per surface, carve-outs
 
 ## More
 - [Project page](https://www.automatiqa.io/gatewright/): the project on automatiqa.io

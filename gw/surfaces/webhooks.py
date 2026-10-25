@@ -21,6 +21,7 @@ from typing import Any
 
 import httpx
 
+from gw.governance.disclosure import with_readable_line
 from gw.harness.registry import secret
 from gw.record import clock
 from gw.record import models as m
@@ -121,6 +122,7 @@ def post_approval_card(store: Store, approval: m.Approval) -> None:
             continue
         out = store.find_one(m.AgentOutput, id=approval.output_id) if approval.output_id else None
         body = (out.payload.get("text") or out.payload.get("says") or out.payload.get("reason") or "") if out else ""
+        body = with_readable_line(str(body)[:1400], out.payload.get("ai_generated")) if out else ""
         approvers = [u for u in store.all(m.User) if {"project_manager", "portfolio_lead"} & set(u.roles)]
         token = card_token(approval.id, approvers[0].id) if approvers else ""
         try:

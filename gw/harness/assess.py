@@ -1,4 +1,4 @@
-"""Should a dependency-carrying plan be treated as a schedule? Implements the M6 evaluation ("Planner premium dependency evaluation") and.
+"""Should a dependency-carrying plan be treated as a schedule?
 
 Planner premium plans (Project for the web, read by `msproject_graph` through Dataverse) carry
 dependencies but no float of their own. Promotion from PlanSource to ScheduleSource would feed

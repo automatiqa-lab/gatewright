@@ -1,5 +1,4 @@
-"""Business days per party country.and
-: the `holidays` library plus `policies.calendars.extra_holidays`.
+"""Business days per party country: the `holidays` library plus `policies.calendars.extra_holidays`.
 """
 
 from __future__ import annotations

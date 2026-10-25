@@ -1,4 +1,4 @@
-"""Agent shape and runner.intro and
+"""Agent shape and runner.
 
 Agents are pure: `run(snapshot) -> outputs`. The runner creates the AgentRun,
 validates citations, passes each output through `governance.decide`, applies or

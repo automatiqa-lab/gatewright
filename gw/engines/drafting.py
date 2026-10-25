@@ -7,7 +7,7 @@ every fact: required lines verbatim, no code, number, date, address or link that
 facts do not contain, no leftover redaction placeholder, a sane length and a clean stop. Anything
 else (no connection, provider down, budget spent, refusal, failed check) falls back to the template,
 and the payload records why. Accepted text is declared model-written, so it carries the Art. 50
-envelope (gw/governance/disclosure.py).
+envelope.
 
 The engine never names a provider or a model: the connection's adapter does.
 """

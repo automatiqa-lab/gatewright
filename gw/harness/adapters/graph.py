@@ -179,7 +179,7 @@ class PlannerGraph:
         return self.g.health()
 
     def add_comment(self, task: str, text: str) -> None:
-        raise Forbidden("planner comments arrive with the comment card work in M6", limit="scope")
+        raise Forbidden("this adapter does not read planner comments", limit="scope")
 
 
 @register("onedrive_graph")

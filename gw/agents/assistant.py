@@ -1,4 +1,6 @@
-"""The assistant: a bounded tool-using agent over the record.A person asks a question; a chat model (any connection named in policies.models.assistant) plans and
+"""The assistant: a bounded tool-using agent over the record.
+
+A person asks a question; a chat model (any connection named in policies.models.assistant) plans and
 calls Gatewright tools, then answers with citations. The loop is provider-neutral.
 
 Boundaries, enforced here and not left to the model:

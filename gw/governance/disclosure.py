@@ -1,7 +1,5 @@
 """EU AI Act Article 50 marking for model-generated output (schema `automatiqa-disclosure/1`).
 
-Implements COMPLIANCE.md (Art. 50(1) and 50(2)) and
-
 Rules, from the lab's canonical source (wording copied verbatim into data/disclosure.yaml):
 - mark only what a model wrote; template text, signals, forecasts and retrieved content stay
   unmarked, and an absent envelope is a truthful statement that nothing was generated;
@@ -114,6 +112,11 @@ def with_readable_line(text: str, env: dict[str, Any] | None) -> str:
     if not line or line in text:
         return text
     return f"{text.rstrip()}\n\n{line}\n"
+
+
+def session_notice() -> str:
+    """The Art. 50(1) line for a person in a session with an agent."""
+    return str(wording()["interactive"]["session_notice"])
 
 
 def item_chip() -> str:
