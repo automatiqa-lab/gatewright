@@ -56,7 +56,7 @@ dev = [
     "mypy>=1.11",
     "types-PyYAML",
     "types-jsonschema",
-    "playwright==1.63.0",
+    "playwright==1.64.0",
 ]
 
 [build-system]
