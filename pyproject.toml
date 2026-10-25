@@ -43,7 +43,7 @@ tabicl = ["tabicl>=2.2"]
 tabpfn-noncommercial = ["tabpfn>=2.0"]
 oidc = ["pyjwt[crypto]>=2.9"]
 # optional LLM adapters; the engine itself depends on none of them
-anthropic = ["anthropic>=1.13,<2"]
+anthropic = ["anthropic>=1.13,<3"]
 postgres = ["psycopg[binary]>=3.2"]
 
 [project.scripts]
